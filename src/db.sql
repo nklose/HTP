@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users
     creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     password CHAR(64),
     handle VARCHAR(16) NOT NULL UNIQUE, -- user's chosen in-game alias; can be changed
-    computer_id INT(12) NOT NULL REFERENCES computers(id),
+    computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     PRIMARY KEY(id)
 );
 
@@ -20,13 +20,13 @@ CREATE TABLE IF NOT EXISTS computers
     owner_id INT(12) REFERENCES users(id),
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     bank_id INT(12) REFERENCES banks(id),
-    ram INT(8), -- total RAM in MB
-    cpu INT(8), -- total CPU speed in MHz
-    hdd INT(8), -- total hard drive space in GB
-    disk_free INT(8), -- total free disk space in GB
-    fw_level INT(3),  -- strength of best firewall on system
-    av_level INT(3),  -- strength of best antivirus software
-    cr_level INT(3),  -- strength of best password cracker
+    ram INT(8) DEFAULT 512, -- total RAM in MB
+    cpu INT(8) DEFAULT 512, -- total CPU speed in MHz
+    hdd INT(8) DEFAULT 1, -- total hard drive space in GB
+    disk_free INT(8) DEFAULT 1, -- total free disk space in GB
+    fw_level INT(3) DEFAULT 1,  -- strength of best firewall on system
+    av_level INT(3) DEFAULT 1,  -- strength of best antivirus software
+    cr_level INT(3) DEFAULT 1,  -- strength of best password cracker
     PRIMARY KEY(id)
 );
 
