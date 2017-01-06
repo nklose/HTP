@@ -2,6 +2,7 @@
 
 import signal
 import subprocess
+import MySQLdb
 
 from termcolor import colored
 
@@ -17,6 +18,9 @@ def main():
     msg("If you have forgotten your password, please email spartandominion@gmail.com.")
     msg("Your username can be between 4 and 16 characters and must be alphanumeric.")
 
+    db = connect_database()
+    cursor = db.cursor()
+
     username = ""
     valid_user = False
 
@@ -24,6 +28,11 @@ def main():
         username = raw_input("\nDesired Username: ")
         msg("You entered " + username + ".")
         
+        # look up username in database
+        sql = "SELECT * FROM users WHERE username = %s"
+        cursor.execute(sql, [username])
+        response = cursor.fetchall()
+                
         # name cannot be blank
         if username == "":
             error("You must enter a username.")
@@ -34,12 +43,26 @@ def main():
         elif len(username) < 4 or len(username) > 16:
             error("Your username must be between 4 and 16 characters.")
         # name must not already exist in database
-        
-        
+        elif len(response) > 0:
+            error("Sorry, that name is taken. Please choose another.")
+        else:
+            msg("Username is available! Please enter your password:")
 
     # Prevent player from exiting game loop
     while True:
         pass
+
+# Establish a connection to MySQL
+def connect_database():
+    cred_file = open("/htp/dbcreds.txt", 'r')
+    u = cred_file.readline()[:-1]
+    p = cred_file.readline()[:-1]
+    d = "htp"
+    con = MySQLdb.connect(host = "localhost", 
+                          user = u,
+                          passwd = p,
+                          db = d)
+    return con
 
 ## OUTPUT MESSAGES
 # Standard Message
