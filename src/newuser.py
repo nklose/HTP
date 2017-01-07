@@ -4,6 +4,8 @@ import signal
 import subprocess
 import MySQLdb
 import random
+import pwd
+import time
 
 from getpass import getpass
 from termcolor import colored
@@ -16,23 +18,72 @@ def signal_handler(signum, frame):
 
 def main():
     print("\n")
-    success("Welcome to Terminal! You must create an account before playing this game.")
-    success("If you have forgotten your password, please email spartandominion@gmail.com.")
-    
+    login_banner()
+
     db = connect_database()
     cursor = db.cursor()
 
+    valid_choice = False
+    while not valid_choice:
+        choice = prompt_num()
+    
+        # log in
+        if choice == "1":
+            login(cursor)
+        # register
+        elif choice == "2":
+            register(cursor)
+        # reset password
+        elif choice == "3":
+            pass
+        # about
+        elif choice == "4":
+            pass
+        # invalid
+        else:
+            error("Invalid choice; please try again.")
+
+## Navigation
+# Shows a user's profile summary
+def profile(cursor, username):
+    show_profile = True
+    msg_box("User Summary")
+    show_user_summary(cursor, username)
+    while show_profile:
+        pass
+
+## Main Menu Options
+# Log in an existing account
+def login(cursor):
+   # check user credentials
+    valid_creds = False
+    while not valid_creds:
+        username = raw_input("Username: ")
+        password = getpass()
+        time.sleep(2)
+        sql = "SELECT * FROM users WHERE username = %s AND password = %s"
+        cursor.execute(sql, [username, password])
+        response = cursor.fetchall()
+        if len(response) == 0:
+            error("Invalid credentials. Please try again.")
+        else:
+            success("Credentials validated. Logging in...")
+            profile(cursor, username)
+
+
+# Register a new user account
+def register(cursor):
     username = ""
     password = ""
     email = ""
     handle = ""
     ip = ""
-
-    msg("\n  Your username can be between 4 and 16 characters and must be alphanumeric.")
+    msg("\nStarting the account creation process...")
+    msg("Your username can be between 4 and 16 characters and must be alphanumeric.")
     valid_user = False
     while not valid_user:
         username = raw_input("Desired Username: ")
-        
+
         # name cannot be blank
         if username == "":
             error("You must enter a username.")
@@ -135,15 +186,7 @@ def main():
     cursor.execute(sql, [computer_id, username]) # update user's computer ID
 
     # done creating things
-    success("Please close this session and reconnect with your new credentials.")
-    
-    # commit changes and close the database connection
-    db.commit()
-    db.close()
-
-    # Prevent player from exiting game loop
-    while True:
-        pass
+    profile(cursor, username)
 
 # Establish a connection to MySQL
 def connect_database():
@@ -158,7 +201,29 @@ def connect_database():
     return con
 
 ## Common operations
-# Generate a random password for a computer or account
+def show_user_summary(username, cursor):
+    sql = "SELECT computer_id FROM users WHERE username = %s"
+    #cursor.execute(sql, [username])
+    #computer_id = cursor.fetchone()[0]
+    #sql = """
+    #      SELECT ip_address, last_login, ram, cpu, hdd, disk_free, 
+    #          fw_level, av_level, cr_level
+    #      FROM computers
+    #      WHERE id = %s
+    #      """
+    #cursor.execute(sql, [computer_id])
+    #response = cursor.fetchall()
+    #print response
+
+# Prompt the user for input
+def prompt():
+    return raw_input("\nlocalhost:~$ ")
+
+# Prompt for a numeric input
+def prompt_num():
+    return raw_input("\n# ")
+
+# Generate a random password
 def gen_password():
     length = random.randint(8, 12)
     return ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(length))
@@ -172,6 +237,13 @@ def gen_ip():
         y = random.randint(0, 255)
         z = random.randint(0, 255)
     return str(w) + "." + str(x) + "." + str(y) + "." + str(z)
+
+def login_banner():
+    print("Welcome to Hack the Planet!")
+    print("Choose an option to continue.\n")
+    msg("1. Log In")
+    msg("2. Register")
+    msg("3. Reset Password\n")
 
 ## OUTPUT MESSAGES
 # Standard Message
@@ -189,6 +261,23 @@ def warning(message):
 # Error Message
 def error(message):
     print(colored("  " + message, 'red'))
+
+# Info Message
+def info(message):
+    print(colored("  " + message, 'blue'))
+
+# Message Box
+def msg_box(message):
+    message_box = "--------------------------------\n"
+    message_box += "| " + message
+    i = 29 - len(message)
+    while i > 0:
+        message_box += " "
+        i -= 1
+    message_box += "|\n"
+    message_box += "--------------------------------"
+
+    print(colored(message_box, 'yellow'))
 
 if __name__ == '__main__':
     main()
