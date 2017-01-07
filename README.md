@@ -4,6 +4,16 @@ A CLI-based hacking strategy game/MMO which is deployed on a Linux SSH server. C
 # Deployment
 1. Install Python 2.x on a Linux server
 2. Install an SSH server and allow remote connections
+  
+  2.1. Open a terminal and type `sudo apt-get install openssh-server`
+  
+  2.2. Make a copy of the config file so you will have a backup by going 
+  
+    ```
+    sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.factory-defaults
+    sudo chmod a-w /etc/ssh/sshd_config.factory-defaults
+    ```
+  
 3. Uncomment the lines in .py scripts that disable keyboard shortcuts like Ctrl-C or Ctrl-Z
 
 # Testing
