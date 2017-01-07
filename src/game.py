@@ -26,7 +26,7 @@ def main():
     valid_choice = False
     while not valid_choice:
         choice = prompt_num()
-    
+
         # log in
         if choice == "1":
             login(con)
@@ -104,7 +104,7 @@ def register(con):
             else:
                 msg("Username is available!")
                 valid_user = True
-    
+
     # get a valid password
     msg("\n  You can now set a password for your account.")
     valid_password = False
@@ -173,7 +173,7 @@ def register(con):
         response = cursor.fetchall()
         if len(response) == 0:
             valid_ip = True
-    
+
     # create a computer for the user
     comp_password = gen_password()
     sql = "SELECT id FROM users WHERE username = %s;"
@@ -198,7 +198,7 @@ def connect_database():
     u = cred_file.readline()[:-1]
     p = cred_file.readline()[:-1]
     d = "htp"
-    con = MySQLdb.connect(host = "localhost", 
+    con = MySQLdb.connect(host = "localhost",
                           user = u,
                           passwd = p,
                           db = d)
@@ -207,20 +207,40 @@ def connect_database():
 ## Common operations
 def show_user_summary(con, username):
     cursor = con.cursor()
+
+    # get computer info
     sql = "SELECT computer_id FROM users WHERE username = %s;"
     cursor.execute(sql, [username])
     computer_id = cursor.fetchone()[0]
     sql = """
-          SELECT ip_address, last_login, ram, cpu, hdd, disk_free, 
-              fw_level, av_level, cr_level
+          SELECT ip_address, last_login, ram, cpu, hdd, disk_free,
+              fw_level, av_level, cr_level, password
           FROM computers
           WHERE id = %s
           """
     cursor.execute(sql, [computer_id])
     response = cursor.fetchall()
-    ip_address, last_login, ram, cpu, hdd, disk_free, fw_level, av_level, cr_level = response[0]
-    property("IP Address", ip_address)
-    property("Last Login", str(last_login))
+    ip_address, last_login, ram, cpu, hdd, disk_free, fw_level, av_level, cr_level, comp_password = response[0]
+
+    # get user's handle
+    sql = "SELECT id, handle FROM users WHERE username = %s"
+    cursor.execute(sql, [username])
+    user_id, handle = cursor.fetchall()[0]
+
+    # get bank account info
+    sql = "SELECT funds FROM bank_accounts WHERE owner_id = %s"
+    cursor.execute(sql, [user_id])
+    response = cursor.fetchall()
+    num_accounts = 0
+    total_funds = 0
+    if len(response) > 0:
+        num_accounts = len(response)
+        i = 0
+        while i < len(response):
+            total_funds += int(response[i][0])
+            i += 1
+
+    # display all info
     property("RAM", str(ram) + " MB")
     property("CPU", str(cpu) + " MHz")
     property("Disk", str(hdd) + " GB")
@@ -229,7 +249,17 @@ def show_user_summary(con, username):
     property("Antivirus", "Level " + str(av_level))
     property("Cracker", "Level " + str(cr_level))
     hr()
+    property("IP Address", ip_address)
+    property("Comp. Password", str(comp_password))
+    hr()
     # add user details
+    property("Handle", handle)
+    property("Last Login", str(last_login))
+    # number of bank accounts
+    property("Total Funds", str(total_funds) + " dollars")
+    property("# of Accounts", str(num_accounts))
+
+    hr()
 
 # Prompt the user for input
 def prompt():
@@ -243,7 +273,7 @@ def prompt_num():
 def gen_password():
     length = random.randint(8, 12)
     return ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(length))
-    
+
 # Generate a random IP
 def gen_ip():
     w, x, y, z = 0, 0, 0, 0
