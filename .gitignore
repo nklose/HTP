@@ -90,3 +90,5 @@ ENV/
 
 # Temporary emacs files
 *~
+
+\#*#
