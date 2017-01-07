@@ -1,0 +1,8 @@
+Class User(object):
+
+    #Initialize User attributes
+    def __init__(self, filename):
+        self.id = id
+        self.username = username
+        
+    

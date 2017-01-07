@@ -20,8 +20,8 @@ def main():
     print("\n")
     login_banner()
 
-    db = connect_database()
-    cursor = db.cursor()
+    con = connect_database()
+    cursor = con.cursor()
 
     valid_choice = False
     while not valid_choice:
@@ -29,10 +29,10 @@ def main():
     
         # log in
         if choice == "1":
-            login(cursor)
+            login(con)
         # register
         elif choice == "2":
-            register(cursor)
+            register(con)
         # reset password
         elif choice == "3":
             pass
@@ -45,16 +45,17 @@ def main():
 
 ## Navigation
 # Shows a user's profile summary
-def profile(cursor, username):
+def profile(con, username):
     show_profile = True
     msg_box("User Summary")
-    show_user_summary(cursor, username)
+    show_user_summary(con, username)
     while show_profile:
         pass
 
 ## Main Menu Options
 # Log in an existing account
-def login(cursor):
+def login(con):
+    cursor = con.cursor()
    # check user credentials
     valid_creds = False
     while not valid_creds:
@@ -68,11 +69,11 @@ def login(cursor):
             error("Invalid credentials. Please try again.")
         else:
             success("Credentials validated. Logging in...")
-            profile(cursor, username)
-
+            profile(con, username)
 
 # Register a new user account
-def register(cursor):
+def register(con):
+    cursor = con.cursor()
     username = ""
     password = ""
     email = ""
@@ -110,7 +111,7 @@ def register(cursor):
     while not valid_password:
         password = getpass()
         confirm = getpass("Confirm: ")
-        if len(password) <= 6:
+        if len(password) < 6:
             error("Your password must contain 6 or more characters.")
         elif password != confirm:
             error("Sorry, those passwords didn't match.")
@@ -125,6 +126,7 @@ def register(cursor):
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             # check if email exists in database
             sql = "SELECT * FROM users WHERE email = %s;"
+            cursor = con.cursor()
             cursor.execute(sql, [email])
             response = cursor.fetchall()
             if len(response) > 0:
@@ -135,6 +137,7 @@ def register(cursor):
             error("Sorry, your input was not in the right format for an email address.")
 
     # get a unique in-game handle
+    cursor = con.cursor()
     msg("\n  Finally, you need to choose an in-game handle that others can see.")
     msg("This is separate from your username, and can be changed later.")
     valid_handle = False
@@ -170,7 +173,6 @@ def register(cursor):
         response = cursor.fetchall()
         if len(response) == 0:
             valid_ip = True
-            msg("You have been assigned IP address " + ip + ".")
     
     # create a computer for the user
     comp_password = gen_password()
@@ -186,10 +188,12 @@ def register(cursor):
     cursor.execute(sql, [computer_id, username]) # update user's computer ID
 
     # done creating things
-    profile(cursor, username)
+    con.commit()
+    profile(con, username)
 
 # Establish a connection to MySQL
 def connect_database():
+    # TODO: move database connections to controller file
     cred_file = open("/htp/dbcreds.txt", 'r')
     u = cred_file.readline()[:-1]
     p = cred_file.readline()[:-1]
@@ -201,19 +205,31 @@ def connect_database():
     return con
 
 ## Common operations
-def show_user_summary(username, cursor):
-    sql = "SELECT computer_id FROM users WHERE username = %s"
-    #cursor.execute(sql, [username])
-    #computer_id = cursor.fetchone()[0]
-    #sql = """
-    #      SELECT ip_address, last_login, ram, cpu, hdd, disk_free, 
-    #          fw_level, av_level, cr_level
-    #      FROM computers
-    #      WHERE id = %s
-    #      """
-    #cursor.execute(sql, [computer_id])
-    #response = cursor.fetchall()
-    #print response
+def show_user_summary(con, username):
+    cursor = con.cursor()
+    sql = "SELECT computer_id FROM users WHERE username = %s;"
+    cursor.execute(sql, [username])
+    computer_id = cursor.fetchone()[0]
+    sql = """
+          SELECT ip_address, last_login, ram, cpu, hdd, disk_free, 
+              fw_level, av_level, cr_level
+          FROM computers
+          WHERE id = %s
+          """
+    cursor.execute(sql, [computer_id])
+    response = cursor.fetchall()
+    ip_address, last_login, ram, cpu, hdd, disk_free, fw_level, av_level, cr_level = response[0]
+    property("IP Address", ip_address)
+    property("Last Login", str(last_login))
+    property("RAM", str(ram) + " MB")
+    property("CPU", str(cpu) + " MHz")
+    property("Disk", str(hdd) + " GB")
+    property("Free", str(disk_free) + " GB")
+    property("Firewall", "Level " + str(fw_level))
+    property("Antivirus", "Level " + str(av_level))
+    property("Cracker", "Level " + str(cr_level))
+    hr()
+    # add user details
 
 # Prompt the user for input
 def prompt():
@@ -243,7 +259,7 @@ def login_banner():
     print("Choose an option to continue.\n")
     msg("1. Log In")
     msg("2. Register")
-    msg("3. Reset Password\n")
+    msg("3. Reset Password")
 
 ## OUTPUT MESSAGES
 # Standard Message
@@ -266,16 +282,36 @@ def error(message):
 def info(message):
     print(colored("  " + message, 'blue'))
 
+# Horizontal Rule
+def hr():
+    print(colored("------------------------------------------------------------", "green"))
+
+# Property Message
+def property(label, value):
+    max_label_length = 16
+    spaces = ""
+    num_spaces = max_label_length - len(label)
+    while num_spaces > 0:
+        spaces += " "
+        num_spaces -= 1
+    print("  " + colored(label + ":", 'cyan') + spaces + colored(value, 'white'))
+
 # Message Box
 def msg_box(message):
-    message_box = "--------------------------------\n"
+    box_length = 60
+    dashes = ""
+    i = box_length
+    while i > 0:
+        dashes += "-"
+        i -= 1
+    message_box = dashes + "\n"
     message_box += "| " + message
-    i = 29 - len(message)
+    i = box_length - len(message) - 3
     while i > 0:
         message_box += " "
         i -= 1
     message_box += "|\n"
-    message_box += "--------------------------------"
+    message_box += dashes
 
     print(colored(message_box, 'yellow'))
 
