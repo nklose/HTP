@@ -7,6 +7,8 @@ import random
 import pwd
 import time
 
+from MessageBox import MessageBox
+
 from getpass import getpass
 from termcolor import colored
 
@@ -46,9 +48,8 @@ def main():
 ## Navigation
 # Shows a user's profile summary
 def profile(con, username):
-    show_profile = True
-    msg_box("User Summary")
     show_user_summary(con, username)
+    show_profile = True
     while show_profile:
         pass
 
@@ -241,25 +242,27 @@ def show_user_summary(con, username):
             i += 1
 
     # display all info
-    property("RAM", str(ram) + " MB")
-    property("CPU", str(cpu) + " MHz")
-    property("Disk", str(hdd) + " GB")
-    property("Free", str(disk_free) + " GB")
-    property("Firewall", "Level " + str(fw_level))
-    property("Antivirus", "Level " + str(av_level))
-    property("Cracker", "Level " + str(cr_level))
-    hr()
-    property("IP Address", ip_address)
-    property("Comp. Password", str(comp_password))
-    hr()
+    msg_box = MessageBox()
+    msg_box.set_title("User Summary")
+    msg_box.add_property("RAM", str(ram) + " MB")
+    msg_box.add_property("CPU", str(cpu) + " MHz")
+    msg_box.add_property("Disk", str(hdd) + " GB")
+    msg_box.add_property("Free", str(disk_free) + " GB")
+    msg_box.add_property("Firewall", "Level " + str(fw_level))
+    msg_box.add_property("Antivirus", "Level " + str(av_level))
+    msg_box.add_property("Cracker", "Level " + str(cr_level))
+    msg_box.hr()
+    msg_box.add_property("IP Address", ip_address)
+    msg_box.add_property("Comp. Password", str(comp_password))
+    msg_box.hr()
     # add user details
-    property("Handle", handle)
-    property("Last Login", str(last_login))
+    msg_box.add_property("Handle", handle)
+    msg_box.add_property("Last Login", str(last_login))
     # number of bank accounts
-    property("Total Funds", str(total_funds) + " dollars")
-    property("# of Accounts", str(num_accounts))
+    msg_box.add_property("Total Funds", str(total_funds) + " dollars")
+    msg_box.add_property("# of Accounts", str(num_accounts))
 
-    hr()
+    msg_box.display()
 
 # Prompt the user for input
 def prompt():
@@ -325,25 +328,6 @@ def property(label, value):
         spaces += " "
         num_spaces -= 1
     print("  " + colored(label + ":", 'cyan') + spaces + colored(value, 'white'))
-
-# Message Box
-def msg_box(message):
-    box_length = 60
-    dashes = ""
-    i = box_length
-    while i > 0:
-        dashes += "-"
-        i -= 1
-    message_box = dashes + "\n"
-    message_box += "| " + message
-    i = box_length - len(message) - 3
-    while i > 0:
-        message_box += " "
-        i -= 1
-    message_box += "|\n"
-    message_box += dashes
-
-    print(colored(message_box, 'yellow'))
 
 if __name__ == '__main__':
     main()
