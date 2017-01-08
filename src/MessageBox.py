@@ -30,7 +30,7 @@ class MessageBox:
         while i > 0:
             spaces += ' '
             i -= 1
-        text = colored('| ', self.border_color)
+        text = colored(u'\u2502 ', self.border_color)
         text += colored(name + ':', self.label_color)
         text += spaces
         text += colored(value, self.text_color)
@@ -42,7 +42,7 @@ class MessageBox:
             spaces += ' '
             i -= 1
         text += spaces
-        text += colored('|', self.border_color)
+        text += colored(u'\u2502', self.border_color)
 
         self.text.append(text)
 
@@ -50,33 +50,39 @@ class MessageBox:
     def hr(self):
         line = ''
         i = 0
-        while i < self.width:
-            line += '-'
+        line += u'\u251c'
+        while i < self.width - 2:
+            line += u'\u2500'
             i += 1
+        line += u'\u2524'
         self.text.append(colored(line, self.border_color))
 
     # Prints the entire message box to console
     def display(self):
 
         # display the title
-        divider = ''
+        divider_bottom = u'\u2515'
+        divider_top = u'\u250d'
         i = 0
-        while i < self.width:
-            divider += '-'
+        while i < self.width - 2:
+            divider_bottom += u'\u2501'
+            divider_top += u'\u2501'
             i += 1
-        print(colored(divider, self.title_color))
-        title = '| ' + self.title
+        divider_bottom += u'\u2519'
+        divider_top += u'\u2511'
+        print(colored(divider_top, self.title_color))
+        title = u'\u2502 ' + self.title
         i = self.width - len(title) - 1
         while i > 0:
             title += ' '
             i -= 1
-        title += '|'
+        title += u'\u2502'
         print(colored(title, self.title_color))
-        print(colored(divider, self.title_color))
+        print(colored(divider_bottom, self.title_color))
 
         # display the content
         for line in self.text:
             print(line)
 
         # close the box
-        print(colored(divider, self.border_color))
+        print(colored(divider_bottom, self.border_color))
