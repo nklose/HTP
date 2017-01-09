@@ -9,6 +9,7 @@ import time
 import hashlib
 
 from MessageBox import MessageBox
+from ChatSession import ChatSession
 
 from getpass import getpass
 from termcolor import colored
@@ -56,9 +57,8 @@ def main():
 def profile(con, username):
     show_user_summary(con, username)
     info("Enter 'help' for a list of commands.\n")
-    show_profile = True
-    while show_profile:
-        command = prompt(username)
+    prompt(con, username)
+
 
 # Shows info about the game
 def about():
@@ -232,6 +232,11 @@ def connect_database():
                           db = d)
     return con
 
+# Establish a connection to IRC
+def connect_chat(nick):
+    cs = ChatSession('[HTP]' + nick)
+    cs.connect()
+
 ## Common operations
 def show_user_summary(con, username):
     cursor = con.cursor()
@@ -291,9 +296,19 @@ def show_user_summary(con, username):
 
     msg_box.display()
 
-# Prompt the user for input
-def prompt(username):
-    return raw_input(username + ":~$ ")
+# Prompt the user for input and respond accordingly.
+def prompt(con, username):
+    cursor = con.cursor()
+    show_prompt = True
+    while show_prompt:
+        command = raw_input(username + ":~$ ")
+        if command == 'help':
+            msg('Help text will go here.')
+        elif command == 'chat':
+            sql = "SELECT handle FROM users WHERE username = %s"
+            cursor.execute(sql, [username])
+            handle = cursor.fetchone()[0]
+            connect_chat(handle)
 
 # Prompt for a numeric input
 def prompt_num():
