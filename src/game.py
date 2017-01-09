@@ -20,13 +20,18 @@ def signal_handler(signum, frame):
 
 def main():
     print("\n")
-    login_banner()
-
     con = connect_database()
     cursor = con.cursor()
 
+    print("\tWelcome to Hack the Planet!")
+
     valid_choice = False
     while not valid_choice:
+        msg("\n  1. Log In")
+        msg("2. Register")
+        msg("3. Reset Password")
+        msg("4. About Hack the Planet")
+
         choice = prompt_num()
 
         # log in
@@ -40,7 +45,7 @@ def main():
             pass
         # about
         elif choice == "4":
-            pass
+            about()
         # invalid
         else:
             error("Invalid choice; please try again.")
@@ -52,6 +57,21 @@ def profile(con, username):
     show_profile = True
     while show_profile:
         pass
+
+# Shows info about the game
+def about():
+    # read about file
+    file = open('../data/about.txt', 'r')
+    long_text = file.readlines()
+    file.close()
+
+    # print in a message box
+    msg_box = MessageBox()
+    msg_box.set_title("About Hack the Planet")
+    for line in long_text:
+        msg_box.add_long_text(line)
+        msg_box.blank_line()
+    msg_box.display()
 
 ## Main Menu Options
 # Log in an existing account
@@ -286,13 +306,6 @@ def gen_ip():
         y = random.randint(0, 255)
         z = random.randint(0, 255)
     return str(w) + "." + str(x) + "." + str(y) + "." + str(z)
-
-def login_banner():
-    print("Welcome to Hack the Planet!")
-    print("Choose an option to continue.\n")
-    msg("1. Log In")
-    msg("2. Register")
-    msg("3. Reset Password")
 
 ## OUTPUT MESSAGES
 # Standard Message

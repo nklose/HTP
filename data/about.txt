@@ -1,0 +1,2 @@
+Hack the Planet (HTP) is a text-based multiplayer hacking simulator. As a player, your goal is to hack servers, banks, and other players as you climb your way to the top. Earn funds by cracking bank accounts, installing viruses, or fulfilling bounties, then use them to gain an edge over your competition by upgrading your hardware!
+Admin contact: spartandominion@gmail.com

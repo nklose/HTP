@@ -1,3 +1,5 @@
+import textwrap
+
 from termcolor import colored
 
 # Message boxes can be used to display info tables in an aesthetic way.
@@ -5,7 +7,7 @@ class MessageBox:
 
     def __init__(self):
         self.title = 'Untitled'     # appears at top
-        self.width = 60             # horizontal size in chars
+        self.width = 70             # horizontal size in chars
         self.title_color = 'yellow'
         self.border_color = 'green'
         self.label_color = 'cyan'
@@ -46,11 +48,38 @@ class MessageBox:
 
         self.text.append(text)
 
+    # adds a word-wrapped paragraph of text
+    def add_long_text(self, text):
+        wrapper = textwrap.TextWrapper()
+        wrapper.width = self.width - 4
+        for line in wrapper.wrap(text):
+            # get filler spaces
+            spaces = ''
+            i = self.width - len(line) - 4
+            while i > 0:
+                spaces += ' '
+                i -= 1
+
+            # add the line
+            bordered_line = colored(u'\u2502 ', self.border_color)
+            bordered_line += colored(line + spaces, self.text_color)
+            bordered_line += colored(u' \u2502', self.border_color)
+            self.text.append(bordered_line)
+
+    # Adds a blank line to the box
+    def blank_line(self):
+        line = u'\u2502'
+        i = 0
+        while i < self.width - 2:
+            line += ' '
+            i += 1
+        line += u'\u2502'
+        self.text.append(line)
+
     # Adds a horizontal rule to the box
     def hr(self):
-        line = ''
+        line = u'\u251c'
         i = 0
-        line += u'\u251c'
         while i < self.width - 2:
             line += u'\u2500'
             i += 1
