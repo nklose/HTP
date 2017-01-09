@@ -6,6 +6,7 @@ import MySQLdb
 import random
 import pwd
 import time
+import hashlib
 
 from MessageBox import MessageBox
 
@@ -54,9 +55,10 @@ def main():
 # Shows a user's profile summary
 def profile(con, username):
     show_user_summary(con, username)
+    info("Enter 'help' for a list of commands.\n")
     show_profile = True
     while show_profile:
-        pass
+        command = prompt(username)
 
 # Shows info about the game
 def about():
@@ -82,13 +84,17 @@ def login(con):
     while not valid_creds:
         username = raw_input("Username: ")
         password = getpass()
-        time.sleep(2)
-        sql = "SELECT * FROM users WHERE username = %s AND password = %s"
-        cursor.execute(sql, [username, password])
-        response = cursor.fetchall()
-        if len(response) == 0:
+
+        sql = "SELECT password FROM users WHERE username = %s"
+        cursor.execute(sql, [username])
+        response = cursor.fetchone()
+        password_hash = response[0]
+
+        if len(response) == 0 or not check_hash(password, password_hash):
+            time.sleep(2)
             error("Invalid credentials. Please try again.")
         else:
+
             success("Credentials validated. Logging in...")
             profile(con, username)
 
@@ -138,6 +144,7 @@ def register(con):
             error("Sorry, those passwords didn't match.")
         else:
             valid_password = True
+            password = hash_password(password, username)
 
     # get a valid email address
     valid_email = False
@@ -285,8 +292,8 @@ def show_user_summary(con, username):
     msg_box.display()
 
 # Prompt the user for input
-def prompt():
-    return raw_input("\nlocalhost:~$ ")
+def prompt(username):
+    return raw_input(username + ":~$ ")
 
 # Prompt for a numeric input
 def prompt_num():
@@ -307,7 +314,17 @@ def gen_ip():
         z = random.randint(0, 255)
     return str(w) + "." + str(x) + "." + str(y) + "." + str(z)
 
-## OUTPUT MESSAGES
+## Password Hashing
+# Create a hash string from a password and username
+def hash_password(password, salt):
+    return hashlib.sha256(salt.encode() + password.encode()).hexdigest() + ":" + salt
+
+# Check a hashed password
+def check_hash(password, hashed_pw):
+    hashed_pw, salt = hashed_pw.split(':')
+    return hashed_pw == hashlib.sha256(salt.encode() + password.encode()).hexdigest()
+
+## Output Messages
 # Standard Message
 def msg(message):
     print(colored("  " + message, 'cyan'))
@@ -327,20 +344,6 @@ def error(message):
 # Info Message
 def info(message):
     print(colored("  " + message, 'blue'))
-
-# Horizontal Rule
-def hr():
-    print(colored("------------------------------------------------------------", "green"))
-
-# Property Message
-def property(label, value):
-    max_label_length = 16
-    spaces = ""
-    num_spaces = max_label_length - len(label)
-    while num_spaces > 0:
-        spaces += " "
-        num_spaces -= 1
-    print("  " + colored(label + ":", 'cyan') + spaces + colored(value, 'white'))
 
 if __name__ == '__main__':
     main()
