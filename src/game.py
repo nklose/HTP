@@ -21,8 +21,6 @@ def signal_handler(signum, frame):
 
 def main():
     print("\n")
-    con = connect_database()
-    cursor = con.cursor()
 
     print("\tWelcome to Hack the Planet!")
 
@@ -37,10 +35,10 @@ def main():
 
         # log in
         if choice == "1":
-            login(con)
+            login()
         # register
         elif choice == "2":
-            register(con)
+            register()
         # reset password
         elif choice == "3":
             pass
@@ -53,7 +51,7 @@ def main():
 
 ## Navigation
 # Shows a user's profile summary
-def profile(con, username):
+def profile(username):
     show_user_summary(con, username)
     info("Enter 'help' for a list of commands.\n")
     show_profile = True
@@ -77,8 +75,7 @@ def about():
 
 ## Main Menu Options
 # Log in an existing account
-def login(con):
-    cursor = con.cursor()
+def login():
    # check user credentials
     valid_creds = False
     while not valid_creds:
@@ -86,8 +83,8 @@ def login(con):
         password = getpass()
 
         sql = "SELECT password FROM users WHERE username = %s"
-        cursor.execute(sql, [username])
-        response = cursor.fetchone()
+        db = Database()
+        response = db.get_query(sql, list(username))
         password_hash = response[0]
 
         if len(response) == 0 or not check_hash(password, password_hash):
@@ -96,11 +93,10 @@ def login(con):
         else:
 
             success("Credentials validated. Logging in...")
-            profile(con, username)
+            profile(username)
 
 # Register a new user account
-def register(con):
-    cursor = con.cursor()
+def register():
     username = ""
     password = ""
     email = ""
@@ -109,6 +105,7 @@ def register(con):
     msg("\nStarting the account creation process...")
     msg("Your username can be between 4 and 16 characters and must be alphanumeric.")
     valid_user = False
+    db = Database()
     while not valid_user:
         username = raw_input("Desired Username: ")
 
@@ -124,8 +121,7 @@ def register(con):
         # name must not already exist in database
         else:
             sql = "SELECT * FROM users WHERE username = %s;"
-            cursor.execute(sql, [username])
-            response = cursor.fetchall()
+            response = db.get_query(sql, list(username))
             if len(response) > 0:
                 error("Sorry, that name is taken. Please choose another.")
             else:
@@ -154,9 +150,7 @@ def register(con):
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             # check if email exists in database
             sql = "SELECT * FROM users WHERE email = %s;"
-            cursor = con.cursor()
-            cursor.execute(sql, [email])
-            response = cursor.fetchall()
+            response = db.get_query(sql, list(email))
             if len(response) > 0:
                 error("Sorry, that email has already been registered.")
             else:
@@ -165,7 +159,6 @@ def register(con):
             error("Sorry, your input was not in the right format for an email address.")
 
     # get a unique in-game handle
-    cursor = con.cursor()
     msg("\n  Finally, you need to choose an in-game handle that others can see.")
     msg("This is separate from your username, and can be changed later.")
     valid_handle = False
@@ -179,8 +172,7 @@ def register(con):
             error("Your handle must be between 2 and 16 characters.")
         else:
             sql = "SELECT * FROM users WHERE handle = %s;"
-            cursor.execute(sql, [handle])
-            response = cursor.fetchall()
+            response = db.get_query(sql, list(handle))
             if len(response) > 0:
                 error("Sorry, that handle is taken. Please choose another.")
             else:
@@ -188,7 +180,8 @@ def register(con):
 
     # create the account
     sql = "INSERT INTO users (username, password, email, handle) VALUES (%s, %s, %s, %s);"
-    cursor.execute(sql, [username, password, email, handle])
+    user = User(username, password, email, handle)
+    db.post_query(sql, [username, password, email, handle])
     success("\n Account " + username + " created!")
 
     # generate an IP address for the user
