@@ -12,7 +12,7 @@ A CLI-based hacking strategy game/MMO which is deployed on a Linux SSH server. C
     sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.factory-defaults
     sudo chmod a-w /etc/ssh/sshd_config.factory-defaults
     ```
-3. Install other dependencies with `sudo apt-get install mysql-server python-dev python-pip libmysqlclient-dev`. During installation of `mysql-server`, make note of the default database password you set.
+3. Install other dependencies with `sudo apt-get install mysql-server python-dev python-pip python-mysqldb libmysqlclient-dev`. During installation of `mysql-server`, make note of the default database password you set.
 4. Log into MySQL with the command `mysql -u [username] -p`, then create the HTP database with `CREATE DATABASE htp;` and exit MySQL.
 5. Load the schema into MySQL with `mysql -u [username] -p htp < db.sql`
 6. Install necessary Python libraries with `pip install MySQLdb termcolor`
