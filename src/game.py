@@ -8,7 +8,6 @@ import time
 import hashlib
 
 from MessageBox import MessageBox
-#from ChatSession import ChatSession
 from User import User
 from Database import Database
 
@@ -85,7 +84,7 @@ def login():
         password = getpass()
 
         sql = "SELECT password FROM users WHERE username = %s"
-        response = db.get_query(sql, [username])
+        response = db.get_query(sql, [username], False)
         password_hash = response[0]
 
         if len(response) == 0 or not check_hash(password, password_hash):
@@ -122,7 +121,7 @@ def register():
         # name must not already exist in database
         else:
             sql = "SELECT * FROM users WHERE username = %s;"
-            response = db.get_query(sql, [username])
+            response = db.get_query(sql, [username], False)
             if len(response) > 0:
                 error("Sorry, that name is taken. Please choose another.")
             else:
@@ -151,7 +150,7 @@ def register():
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             # check if email exists in database
             sql = "SELECT * FROM users WHERE email = %s;"
-            response = db.get_query(sql, [email])
+            response = db.get_query(sql, [email], False)
             if len(response) > 0:
                 error("Sorry, that email has already been registered.")
             else:
@@ -173,7 +172,7 @@ def register():
             error("Your handle must be between 2 and 16 characters.")
         else:
             sql = "SELECT * FROM users WHERE handle = %s;"
-            response = db.get_query(sql, [handle])
+            response = db.get_query(sql, [handle], False)
             if len(response) > 0:
                 error("Sorry, that handle is taken. Please choose another.")
             else:
@@ -191,40 +190,22 @@ def register():
         ip = gen_ip()
         # check if the IP has been assigned already
         sql = "SELECT * FROM computers WHERE ip_address = %s;"
-        response = db.get_query(sql, [ip])
+        response = db.get_query(sql, [ip], False)
         if len(response) == 0:
             valid_ip = True
 
     # create a computer for the user
     comp_password = gen_password()
     sql = "SELECT id FROM users WHERE username = %s;"
-    response = db.get_query(sql, [username])
-    cursor.execute(sql, [username]) # get user's ID
-    owner_id = cursor.fetchone()[0]
+    owner_id = db.get_query(sql, [username], True)[0] # get user's ID
     sql = "INSERT INTO computers (ip_address, password, owner_id) VALUES (%s, %s, %s);"
-    cursor.execute(sql, [ip, comp_password, int(owner_id)]) # set computer owner to user's ID
+    db.post_query(sql, [ip, comp_password, int(owner_id)]) # set computer owner to user's ID
     sql = "SELECT id FROM computers WHERE owner_id = %s;"
-    cursor.execute(sql, [owner_id]) # get computer's ID
-    computer_id = cursor.fetchone()[0]
+    computer_id = db.get_query(sql, [owner_id], True)[0] # get computer's ID
     sql = "UPDATE users SET computer_id = %s WHERE username = %s;"
-    cursor.execute(sql, [computer_id, username]) # update user's computer ID
+    db.post_query(sql, [computer_id, username]) # update user's computer ID
 
-    # done creating things
-    con.commit()
-    profile(con, username)
-
-# Establish a connection to MySQL
-def connect_database():
-    # TODO: move database connections to controller file
-    cred_file = open("../data/dbcreds.txt", 'r')
-    u = cred_file.readline()[:-1]
-    p = cred_file.readline()[:-1]
-    d = "htp"
-    con = MySQLdb.connect(host = "localhost",
-                          user = u,
-                          passwd = p,
-                          db = d)
-    return con
+    profile(username)
 
 # Establish a connection to IRC
 def connect_chat(nick):
@@ -232,32 +213,29 @@ def connect_chat(nick):
     cs.connect()
 
 ## Common operations
-def show_user_summary(con, username):
-    cursor = con.cursor()
+def show_user_summary(username):
+    # initialize database
+    db = Database ()
 
     # get computer info
     sql = "SELECT computer_id FROM users WHERE username = %s;"
-    cursor.execute(sql, [username])
-    computer_id = cursor.fetchone()[0]
+    computer_id = db.get_query(sql, [username], True)[0]
     sql = """
           SELECT ip_address, last_login, ram, cpu, hdd, disk_free,
               fw_level, av_level, cr_level, password
           FROM computers
           WHERE id = %s
           """
-    cursor.execute(sql, [computer_id])
-    response = cursor.fetchall()
+    response = db.get_query(sql, [computer_id], False)
     ip_address, last_login, ram, cpu, hdd, disk_free, fw_level, av_level, cr_level, comp_password = response[0]
 
     # get user's handle
     sql = "SELECT id, handle FROM users WHERE username = %s"
-    cursor.execute(sql, [username])
-    user_id, handle = cursor.fetchall()[0]
+    user_id, handle = db.get_query(sql, [username], False)[0]
 
     # get bank account info
     sql = "SELECT funds FROM bank_accounts WHERE owner_id = %s"
-    cursor.execute(sql, [user_id])
-    response = cursor.fetchall()
+    response = db.get_query(sql, [user_id], False)
     num_accounts = 0
     total_funds = 0
     if len(response) > 0:
@@ -291,8 +269,9 @@ def show_user_summary(con, username):
     msg_box.display()
 
 # Prompt the user for input and respond accordingly.
-def prompt(con, username):
-    cursor = con.cursor()
+def prompt(username):
+    db = Database()
+
     show_prompt = True
     while show_prompt:
         command = raw_input(username + ":~$ ")
@@ -300,8 +279,7 @@ def prompt(con, username):
             msg('Help text will go here.')
         elif command == 'chat':
             sql = "SELECT handle FROM users WHERE username = %s"
-            cursor.execute(sql, [username])
-            handle = cursor.fetchone()[0]
+            handle = db.get_query(sql, [username], True)[0]
             connect_chat(handle)
 
 # Prompt for a numeric input
