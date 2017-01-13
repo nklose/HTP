@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users
     email VARCHAR(254) NOT NULL UNIQUE,
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    password CHAR(80), -- 64 for SHA-256 plus 16 for salt
+    password CHAR(81), -- 64 for SHA-256 plus 16 for salt
     handle VARCHAR(16) NOT NULL UNIQUE, -- user's chosen in-game alias; can be changed
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     PRIMARY KEY(id)
