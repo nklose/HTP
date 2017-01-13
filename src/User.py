@@ -5,4 +5,3 @@ class User:
         self.email = email
         self.password = password
         self.handle = handle
-
