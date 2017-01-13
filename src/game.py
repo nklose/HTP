@@ -2,14 +2,15 @@
 import re
 import signal
 import subprocess
-import MySQLdb
 import random
 import pwd
 import time
 import hashlib
 
 from MessageBox import MessageBox
-from ChatSession import ChatSession
+#from ChatSession import ChatSession
+from User import User
+from Database import Database
 
 from getpass import getpass
 from termcolor import colored
@@ -53,9 +54,9 @@ def main():
 ## Navigation
 # Shows a user's profile summary
 def profile(username):
-    show_user_summary(con, username)
+    show_user_summary(username)
     info("Enter 'help' for a list of commands.\n")
-    prompt(con, username)
+    prompt(username)
 
 
 # Shows info about the game
@@ -76,15 +77,15 @@ def about():
 ## Main Menu Options
 # Log in an existing account
 def login():
-   # check user credentials
+   # check user credentials        
+    db = Database()
     valid_creds = False
     while not valid_creds:
         username = raw_input("Username: ")
         password = getpass()
 
         sql = "SELECT password FROM users WHERE username = %s"
-        db = Database()
-        response = db.get_query(sql, list(username))
+        response = db.get_query(sql, [username])
         password_hash = response[0]
 
         if len(response) == 0 or not check_hash(password, password_hash):
@@ -121,7 +122,7 @@ def register():
         # name must not already exist in database
         else:
             sql = "SELECT * FROM users WHERE username = %s;"
-            response = db.get_query(sql, list(username))
+            response = db.get_query(sql, [username])
             if len(response) > 0:
                 error("Sorry, that name is taken. Please choose another.")
             else:
@@ -150,7 +151,7 @@ def register():
         if re.match(r"[^@]+@[^@]+\.[^@]+", email):
             # check if email exists in database
             sql = "SELECT * FROM users WHERE email = %s;"
-            response = db.get_query(sql, list(email))
+            response = db.get_query(sql, [email])
             if len(response) > 0:
                 error("Sorry, that email has already been registered.")
             else:
@@ -172,7 +173,7 @@ def register():
             error("Your handle must be between 2 and 16 characters.")
         else:
             sql = "SELECT * FROM users WHERE handle = %s;"
-            response = db.get_query(sql, list(handle))
+            response = db.get_query(sql, [handle])
             if len(response) > 0:
                 error("Sorry, that handle is taken. Please choose another.")
             else:
@@ -190,14 +191,14 @@ def register():
         ip = gen_ip()
         # check if the IP has been assigned already
         sql = "SELECT * FROM computers WHERE ip_address = %s;"
-        cursor.execute(sql, [ip])
-        response = cursor.fetchall()
+        response = db.get_query(sql, [ip])
         if len(response) == 0:
             valid_ip = True
 
     # create a computer for the user
     comp_password = gen_password()
     sql = "SELECT id FROM users WHERE username = %s;"
+    response = db.get_query(sql, [username])
     cursor.execute(sql, [username]) # get user's ID
     owner_id = cursor.fetchone()[0]
     sql = "INSERT INTO computers (ip_address, password, owner_id) VALUES (%s, %s, %s);"

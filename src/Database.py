@@ -1,15 +1,17 @@
+import MySQLdb
+
 class Database:
 
     def __init__(self):
         self.cred_file = open("/htp/dbcreds.txt", 'r')
-        self.u = cred_file.readline()[:-1]
-        self.p = cred_file.readline()[:-1]
+        self.u = self.cred_file.readline()[:-1]
+        self.p = self.cred_file.readline()[:-1]
         self.d = "htp"
         self.con = MySQLdb.connect(host = "localhost",
-                          user = u,
-                          passwd = p,
-                          db = d)
-        self.cursor = con.cursor()
+                          user = self.u,
+                          passwd = self.p,
+                          db = self.d)
+        self.cursor = self.con.cursor()
 
     def get_query(self, sql, args):
         self.cursor.execute(sql, args)
