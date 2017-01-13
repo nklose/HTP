@@ -3,7 +3,7 @@ import MySQLdb
 class Database:
 
     def __init__(self):
-        self.cred_file = open("/htp/dbcreds.txt", "r")
+        self.cred_file = open("../data/dbcreds.txt", "r")
         self.u = self.cred_file.readline()[:-1]
         self.p = self.cred_file.readline()[:-1]
         self.d = "htp"
