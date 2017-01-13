@@ -222,7 +222,7 @@ def register(con):
 # Establish a connection to MySQL
 def connect_database():
     # TODO: move database connections to controller file
-    cred_file = open("/htp/dbcreds.txt", 'r')
+    cred_file = open("../data/dbcreds.txt", 'r')
     u = cred_file.readline()[:-1]
     p = cred_file.readline()[:-1]
     d = "htp"
