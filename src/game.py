@@ -7,12 +7,17 @@ import random
 import pwd
 import time
 import hashlib
+import curses
 
 from MessageBox import MessageBox
-from ChatSession import ChatSession
 
+from datetime import datetime
+from threading import Thread
 from getpass import getpass
 from termcolor import colored
+
+logfile = "../data/irc.log"
+tab_pressed = False
 
 # Handle keyboard interrupt shortcuts
 def signal_handler(signum, frame):
@@ -222,7 +227,7 @@ def register(con):
 # Establish a connection to MySQL
 def connect_database():
     # TODO: move database connections to controller file
-    cred_file = open("/htp/dbcreds.txt", 'r')
+    cred_file = open("../data/dbcreds.txt", 'r')
     u = cred_file.readline()[:-1]
     p = cred_file.readline()[:-1]
     d = "htp"
@@ -233,9 +238,11 @@ def connect_database():
     return con
 
 # Establish a connection to IRC
-def connect_chat(nick):
-    cs = ChatSession('[HTP]' + nick)
-    cs.connect()
+def show_chat(username):
+    print("Connecting to chat server...")
+    receiver = Receiver()
+    sender = Sender(username, receiver)
+    sender.start()
 
 ## Common operations
 def show_user_summary(con, username):
@@ -308,11 +315,15 @@ def prompt(con, username):
             sql = "SELECT handle FROM users WHERE username = %s"
             cursor.execute(sql, [username])
             handle = cursor.fetchone()[0]
-            connect_chat(handle)
+            show_chat(handle)
 
 # Prompt for a numeric input
 def prompt_num():
     return raw_input("\n# ")
+
+# Prompt for chat input
+def prompt_chat(username):
+    return raw_input('[' + username + '] ')
 
 # Generate a random password
 def gen_password():
@@ -360,6 +371,66 @@ def error(message):
 def info(message):
     print(colored("  " + message, 'blue'))
 
+# Get current time as string
+def get_timestamp():
+    ts = time.time()
+    return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+
+# Converts a string to a timestamp
+def read_timestamp(str):
+    if len(str) > 0:
+        return datetime.strptime(str, '%Y-%m-%d %H:%M:%S')
+    else:
+        warning("Blank line encountered in " + logfile)
+    
+# Logs sent messages for IRC channel
+class Sender(Thread):
+    def __init__(self, username, receiver):
+        Thread.__init__(self)
+        self.receiver = receiver
+        self.username = username
+        self.receiver.start()
+        pass
+    def run(self):
+        stop = False
+        msg_last_received = get_timestamp()
+        scr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        scr.keypad(1)
+        width = 40
+        height = 50
+        input_x = 20
+        input_y = 7
+        win = curses.newwin(height, width, input_y, input_x)
+        while not stop:
+            key = ''
+            while key != 9:
+                key = scr.getch()
+                scr.addch(20, 25, key)
+                scr.refresh()
+            print('I\'m another thread.')
+        curses.nocbreak()
+        scr.keypad(0)
+        curses.echo()
+        curses.endwin()
+        print("Exiting chat...")
+            #    text = prompt_chat(self.username)
+            #else:
+            #    pass
+
+# Receives messages from IRC channel
+class Receiver(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        pass
+    def run(self):
+        pass
+        #while True:
+        #    if not tab_pressed:
+        #        print("Hi! I'm a thread.")
+        #        time.sleep(1)
+    
 if __name__ == '__main__':
     main()
 
