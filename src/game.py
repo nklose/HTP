@@ -179,7 +179,8 @@ def register():
 
     # create the account
     sql = "INSERT INTO users (username, password, email, handle) VALUES (%s, %s, %s, %s);"
-    user = User(username, password, email, handle)
+    #TODO Implement models
+    # user = User(username, password, email, handle)
     db.post_query(sql, [username, password, email, handle])
     success("\n Account " + username + " created!")
 
