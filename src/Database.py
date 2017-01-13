@@ -30,4 +30,6 @@ class Database:
         self.cursor.execute(sql, args)
         response = self.cursor.fetchall()
         self.con.commit()
-        return response
+
+    def close(self):
+        self.con.close()

@@ -93,6 +93,9 @@ def login():
 
             success("Credentials validated. Logging in...")
             profile(username)
+  
+    # close database
+    db.close()
 
 # Register a new user account
 def register():
@@ -205,6 +208,8 @@ def register():
     sql = "UPDATE users SET computer_id = %s WHERE username = %s;"
     db.post_query(sql, [computer_id, username]) # update user's computer ID
 
+    # close database
+    db.close()
     profile(username)
 
 # Establish a connection to IRC
@@ -245,6 +250,9 @@ def show_user_summary(username):
             total_funds += int(response[i][0])
             i += 1
 
+    # close database
+    db.close()
+
     # display all info
     msg_box = MessageBox()
     msg_box.set_title("User Summary")
@@ -281,6 +289,9 @@ def prompt(username):
             sql = "SELECT handle FROM users WHERE username = %s"
             handle = db.get_query(sql, [username], True)[0]
             connect_chat(handle)
+    
+    # close database
+    db.close()
 
 # Prompt for a numeric input
 def prompt_num():
