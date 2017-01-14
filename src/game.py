@@ -11,6 +11,7 @@ import curses
 from MessageBox import MessageBox
 from User import User
 from Database import Database
+from ChatSession import ChatSession
 
 from datetime import datetime
 from threading import Thread
@@ -62,7 +63,6 @@ def profile(username):
     show_user_summary(username)
     info("Enter 'help' for a list of commands.\n")
     prompt(username)
-
 
 # Shows info about the game
 def about():
@@ -219,12 +219,11 @@ def register():
     profile(username)
 
 # Establish a connection to IRC
-def show_chat(username):
+def show_chat(username, handle):
     print("Connecting to chat server...")
-    receiver = Receiver()
-    sender = Sender(username, receiver)
-    sender.start()
-
+    cs = ChatSession(handle)
+    profile(username)
+    
 ## Common operations
 def show_user_summary(username):
     # initialize database
@@ -290,14 +289,18 @@ def prompt(username):
 
     show_prompt = True
     while show_prompt:
-        command = raw_input(username + ":~$ ")
+        command = raw_input(username + ":~$ ").lower()
         if command == 'help':
             msg('Help text will go here.')
         elif command == 'chat':
             sql = "SELECT handle FROM users WHERE username = %s"
             handle = db.get_query(sql, [username])[0]
-            connect_chat(handle)
-    
+            show_chat(username, handle)
+        elif command == 'exit':
+            show_prompt = False
+            # exit script and disconnect from server
+            exit()
+            
     # close database
     db.close()
 
