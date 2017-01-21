@@ -12,14 +12,13 @@ from MessageBox import MessageBox
 from User import User
 from Database import Database
 from ChatSession import ChatSession
+from File import File
+from Directory import Directory
 
 from datetime import datetime
 from threading import Thread
 from getpass import getpass
 from termcolor import colored
-
-logfile = "../data/irc.log"
-tab_pressed = False
 
 # Handle keyboard interrupt shortcuts
 def signal_handler(signum, frame):
@@ -286,20 +285,28 @@ def show_user_summary(username):
 # Prompt the user for input and respond accordingly.
 def prompt(username):
     db = Database()
-
+    directory = Directory(username)
     show_prompt = True
     while show_prompt:
-        command = raw_input(username + ":~$ ").lower()
+        command = raw_input(username + ':' + directory.name + '$ ').lower()
         if command == 'help':
             msg('Help text will go here.')
         elif command == 'chat':
-            sql = "SELECT handle FROM users WHERE username = %s"
+            sql = 'SELECT handle FROM users WHERE username = %s'
             handle = db.get_query(sql, [username])[0]
             show_chat(username, handle)
+        elif command == 'newfile':
+            file = File('file.txt', directory, 'test')
+            file.save_new()
+        elif command in ['ls', 'dir']:
+            msg('Showing concents of ' + directory.name + ':')
+            msg(directory.get_contents())
         elif command == 'exit':
             show_prompt = False
             # exit script and disconnect from server
             exit()
+        else:
+            error('Sorry, your input was not understood.')
             
     # close database
     db.close()
@@ -369,59 +376,7 @@ def read_timestamp(str):
         return datetime.strptime(str, '%Y-%m-%d %H:%M:%S')
     else:
         warning("Blank line encountered in " + logfile)
-    
-# Logs sent messages for IRC channel
-class Sender(Thread):
-    def __init__(self, username, receiver):
-        Thread.__init__(self)
-        self.receiver = receiver
-        self.username = username
-        self.receiver.start()
-        pass
-    def run(self):
-        stop = False
-        msg_last_received = get_timestamp()
-        scr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        scr.keypad(1)
-        width = 40
-        height = 50
-        input_x = 20
-        input_y = 7
-        win = curses.newwin(height, width, input_y, input_x)
-        while not stop:
-            key = ''
-            while key != 9:
-                key = scr.getch()
-                scr.addch(20, 25, key)
-                scr.refresh()
-            print('I\'m another thread.')
-        curses.nocbreak()
-        scr.keypad(0)
-        curses.echo()
-        curses.endwin()
-        print("Exiting chat...")
-            #    text = prompt_chat(self.username)
-            #else:
-            #    pass
+  
 
-# Receives messages from IRC channel
-class Receiver(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        pass
-    def run(self):
-        pass
-        #while True:
-        #    if not tab_pressed:
-        #        print("Hi! I'm a thread.")
-        #        time.sleep(1)
-    
 if __name__ == '__main__':
     main()
-
-# Prevent user from entering shell
-print("Please close this window to disconnect.")
-while True:
-    pass

@@ -21,10 +21,10 @@ from datetime import datetime
 server = 'irc.freenode.net'
 channel = '##HTP'
 port = 6667
-nick = '[HTP]'              # username to connect with 
+nick = '[HTP]'              # username to connect with
 msg_delay = 1               # number of seconds to wait before transmitting messages
 connect_delay = 15          # number of seconds to wait for initial connection
-logfile = '../data/irc.txt' # file to log messages in 
+logfile = '../data/irc.txt' # file to log messages in
 log_size = 1024 * 1024      # max number of bytes in logfile
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -55,7 +55,7 @@ def log(msg_type, message):
         text = 'E'
     try:
         file = open(logfile, 'a+')
-        text += '[' + get_timestamp() + ']' + message
+        text += '[' + get_timestamp() + ']' + message[:-2] + '\n'
         file.write(text)
         file.close()
         print(text[:-1])
@@ -167,11 +167,11 @@ class Receiver(Thread):
                 elif text.find('PART') != -1:
                     end = text.find('!')
                     username = text[1:end]
-                    log('recv', '[' + username + '] left\n')
+                    log('recv', '[' + username + '] left \n')
                 elif text.find('JOIN') != -1:
                     end = text.find('!')
                     username = text[1:end]
-                    log('recv', '[' + username + ']' + ' joined\n')
+                    log('recv', '[' + username + ']' + ' joined \n')
                 else:
                     print(text)
             except socket.error:

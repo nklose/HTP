@@ -15,15 +15,8 @@ class Database:
 
     # search database and return search values
     def get_query(self, sql, args):
-	self.cursor.execute(sql, args)
-        
-        # fetch one if only one item in args
-        if len(args) == 1:
-            response = self.cursor.fetchone()        
-        # fetch all otherwise
-        elif len(args) > 1:     
-            response = self.cursor.fetchall()
-        return response
+    	self.cursor.execute(sql, args)
+        return self.cursor.fetchall()
     
     # update tables in the database
     def post_query(self, sql, args):

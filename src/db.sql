@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS directories
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
     dir_name VARCHAR(32) NOT NULL,
     parent_id INT(12) NOT NULL,
+    computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     PRIMARY KEY(id)
 );
 
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS files
     file_name VARCHAR(32) NOT NULL,
     parent_id INT(12) NOT NULL REFERENCES directories(id),
     content VARCHAR(4096),
-    file_type INT(2) NOT NULL,
+    file_type VARCHAR(4) NOT NULL,
     file_level INT(2) NOT NULL,
     file_size INT(12) NOT NULL, -- size in bytes
     PRIMARY KEY(id)
