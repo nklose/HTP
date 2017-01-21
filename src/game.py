@@ -89,9 +89,9 @@ def login():
         password = getpass()
 
         sql = "SELECT password FROM users WHERE username = %s"
-        password_hash = db.get_query(sql, [username])[0][0]
+        password_hash = db.get_query(sql, [username])
 
-        if len(password_hash) == 0 or not check_hash(password, password_hash):
+        if len(password_hash) == 0 or not check_hash(password, password_hash[0][0]):
             time.sleep(2)
             error("Invalid credentials. Please try again.")
         else:
