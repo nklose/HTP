@@ -1,11 +1,12 @@
+import os
 import MySQLdb
 
 class Database:
 
     def __init__(self):
-        self.cred_file = open("../data/dbcreds.txt", "r")
-        self.u = self.cred_file.readline()[:-1]
-        self.p = self.cred_file.readline()[:-1]
+        self.u = os.environ['htpuser']
+        self.p = os.environ['htppass']
+        
         self.d = "htp"
         self.con = MySQLdb.connect(host = "localhost",
                           user = self.u,
