@@ -89,7 +89,7 @@ def login():
         password = getpass()
 
         sql = "SELECT password FROM users WHERE username = %s"
-        password_hash = db.get_query(sql, [username])[0]
+        password_hash = db.get_query(sql, [username])[0][0]
 
         if len(password_hash) == 0 or not check_hash(password, password_hash):
             time.sleep(2)
@@ -129,7 +129,7 @@ def register():
         else:
             sql = "SELECT * FROM users WHERE username = %s;"
             response = db.get_query(sql, [username])
-            if response is not None:
+            if len(response) > 0:
                 error("Sorry, that name is taken. Please choose another.")
             else:
                 msg("Username is available!")
@@ -158,7 +158,7 @@ def register():
             # check if email exists in database
             sql = "SELECT * FROM users WHERE email = %s;"
             response = db.get_query(sql, [email])
-            if response is not None:
+            if len(response) > 0:
                 error("Sorry, that email has already been registered.")
             else:
                 valid_email = True
@@ -180,7 +180,7 @@ def register():
         else:
             sql = "SELECT * FROM users WHERE handle = %s;"
             response = db.get_query(sql, [handle])
-            if response is not None:
+            if len(response) > 0:
                 error("Sorry, that handle is taken. Please choose another.")
             else:
                 valid_handle = True
@@ -199,17 +199,17 @@ def register():
         # check if the IP has been assigned already
         sql = "SELECT * FROM computers WHERE ip_address = %s;"
         response = db.get_query(sql, [ip])
-        if response is None:
+        if len(response) == 0:
             valid_ip = True
  
     # create a computer for the user
     comp_password = gen_password()
     sql = "SELECT id FROM users WHERE username = %s;"
-    owner_id = db.get_query(sql, [username])[0] # get user's ID
+    owner_id = db.get_query(sql, [username])[0][0] # get user's ID
     sql = "INSERT INTO computers (ip_address, password, owner_id) VALUES (%s, %s, %s);"
     db.post_query(sql, [ip, comp_password, int(owner_id)]) # set computer owner to user's ID
     sql = "SELECT id FROM computers WHERE owner_id = %s;"
-    computer_id = db.get_query(sql, [owner_id])[0] # get computer's ID
+    computer_id = db.get_query(sql, [owner_id])[0][0] # get computer's ID
     sql = "UPDATE users SET computer_id = %s WHERE username = %s;"
     db.post_query(sql, [computer_id, username]) # update user's computer ID
 
@@ -230,19 +230,19 @@ def show_user_summary(username):
 
     # get computer info
     sql = "SELECT computer_id FROM users WHERE username = %s;"
-    computer_id = db.get_query(sql, [username])[0]
+    computer_id = db.get_query(sql, [username])[0][0]
     sql = """
           SELECT ip_address, last_login, ram, cpu, hdd, disk_free,
               fw_level, av_level, cr_level, password
           FROM computers
           WHERE id = %s
           """
-    response = db.get_query(sql, [computer_id])
+    response = db.get_query(sql, [computer_id])[0]
     ip_address, last_login, ram, cpu, hdd, disk_free, fw_level, av_level, cr_level, comp_password = response
 
     # get user's handle
     sql = "SELECT id, handle FROM users WHERE username = %s"
-    user_id, handle = db.get_query(sql, [username])
+    user_id, handle = db.get_query(sql, [username])[0]
 
     # get bank account info
     sql = "SELECT funds FROM bank_accounts WHERE owner_id = %s"
