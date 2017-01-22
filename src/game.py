@@ -84,6 +84,7 @@ def login():
    # check user credentials        
     db = Database()
     valid_creds = False
+    attempts = 1
     while not valid_creds:
         username = raw_input("Username: ")
         password = getpass()
@@ -91,9 +92,13 @@ def login():
         sql = "SELECT password FROM users WHERE username = %s"
         password_hash = db.get_query(sql, [username])
 
-        if len(password_hash) == 0 or not check_hash(password, password_hash[0][0]):
+        if attempts > 4:
+            error("Disconnecting after 5 failed login attempts.")
+            exit()
+        elif len(password_hash) == 0 or not check_hash(password, password_hash[0][0]):
             time.sleep(2)
             error("Invalid credentials. Please try again.")
+            attempts += 1
         else:
 
             success("Credentials validated. Logging in...")
