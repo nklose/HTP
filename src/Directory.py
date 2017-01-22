@@ -1,3 +1,5 @@
+import GameController as gc
+
 from File import File
 from Database import Database
 
@@ -44,6 +46,7 @@ class Directory:
             self.id = int(db.get_query(sql, args)[0][0])
 
             # get files in this directory
+            self.files = []
             sql = 'SELECT file_name FROM files WHERE parent_id = %s'
             args = [self.id]
             response = db.get_query(sql, args)
@@ -58,6 +61,7 @@ class Directory:
                 i += 1
 
             # get subdirectories
+            self.subdirs = []
             sql = 'SELECT * FROM directories WHERE parent_id = %s'
             args = [self.id]
             response = db.get_query(sql, args)
@@ -100,9 +104,28 @@ class Directory:
     def add_file(self, file):
         pass
 
-    # returns files and subdirectories in this directory
-    def get_contents(self):
-        pass
+    # returns subdirectories in this directory
+    def get_subdirs(self):
+        subdir_list = ''
+        for subdir in self.subdirs:
+            subdir_list += subdir.name + ' '
+        return subdir_list
+
+    # returns files in this directory
+    def get_files(self):
+        file_list = ''
+        for file in self.files:
+            file_list += file.name + ' '
+        return file_list
+
+    # prints contents to screen
+    def print_contents(self):
+        self.lookup()
+        dir_list = self.get_subdirs()
+        file_list = self.get_files()
+
+        gc.msg_pair('Directories: ', dir_list)
+        gc.msg_pair('Files:       ', file_list)
 
     # permanently delete this directory
     def delete(self):

@@ -56,13 +56,13 @@ class User:
             sql += 'password, handle, computer_id) VALUES '
             sql += '(%s, %s, %s, %s, %s, %s, %s)'
             args = [self.name, self.email, self.last_login, self.creation_date,
-                self.password, self.handle, self.computer_id]
+                self.password, self.handle, self.computer.id]
             self.exists = True
         else:
             sql = 'UPDATE users SET email = %s, last_login = %s, '
             sql += 'creation_date = %s, password = %s, handle = %s, computer_id = %s '
             sql += 'WHERE username = %s'
             args = [self.email, self.last_login, self.creation_date,
-                self.password, self.handle, self.computer_id, self.name]
+                self.password, self.handle, self.computer.id, self.name]
         db.post_query(sql, args)
         db.close()

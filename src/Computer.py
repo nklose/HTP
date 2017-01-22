@@ -67,6 +67,7 @@ class Computer:
         sql = ''
 
         if not self.exists:
+            # create the computer
             sql = 'INSERT INTO computers (ip, password, domain_name, owner_id, last_login, bank_id, '
             sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, cr_level) VALUES '
             sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
@@ -74,6 +75,13 @@ class Computer:
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
                 self.fw_level, self.av_level, self.cr_level]
             self.exists = True
+            db.post_query(sql, args)
+            self.lookup()
+
+            # create a home directory for the computer
+            sql = 'INSERT INTO directories (dir_name, parent_id, computer_id) VALUES (%s, %s, %s)'
+            args = ['~', 0, self.id]
+            db.post_query(sql, args)
         else:
             sql = 'UPDATE computers SET password = %s, owner_id = %s, last_login = %s, '
             sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, fw_level = %s, '
@@ -81,5 +89,5 @@ class Computer:
             args = [self.password, self.domain_name, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
                 self.fw_level, self.av_level, self.cr_level, self.ip]
-        db.post_query(sql, args)
+            db.post_query(sql, args)
         db.close()
