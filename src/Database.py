@@ -6,7 +6,7 @@ class Database:
     def __init__(self):
         self.u = os.environ['htpuser']
         self.p = os.environ['htppass']
-        
+
         self.d = "htp"
         self.con = MySQLdb.connect(host = "localhost",
                           user = self.u,
@@ -18,7 +18,7 @@ class Database:
     def get_query(self, sql, args):
     	self.cursor.execute(sql, args)
         return self.cursor.fetchall()
-    
+
     # update tables in the database
     def post_query(self, sql, args):
         self.cursor.execute(sql, args)

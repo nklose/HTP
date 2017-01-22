@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users
 CREATE TABLE IF NOT EXISTS computers
 (
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
-    ip_address VARCHAR(16) NOT NULL UNIQUE,
+    ip VARCHAR(16) NOT NULL UNIQUE,
     password VARCHAR(16) NOT NULL, -- password used to hack into the computer
     domain_name VARCHAR(32),
     owner_id INT(12) REFERENCES users(id),

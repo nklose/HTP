@@ -74,7 +74,6 @@ class Directory:
     # synchronize object with database
     def save(self):
         db = Database()
-        self.lookup()
         if not self.exists:
             sql = 'INSERT INTO directories (dir_name, parent_id, computer_id) VALUES '
             sql += '(%s, %s, %s)'
