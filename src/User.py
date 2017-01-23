@@ -7,6 +7,7 @@ from Computer import Computer
 from MessageBox import MessageBox
 
 from datetime import datetime
+from getpass import getpass
 
 class User:
 
@@ -110,3 +111,30 @@ class User:
         msg_box.add_property('# of Accounts', str(num_accounts))
 
         msg_box.display()
+
+    def login(self):
+        db = Database()
+        valid_creds = False
+        attempts = 1
+        while not valid_creds:
+            username = raw_input('Username: ')
+            password = getpass()
+
+            sql = 'SELECT password FROM users WHERE username = %s'
+            password_hash = db.get_query(sql, [username])
+
+            if attempts > 4:
+                gc.error('Disconnecting after 5 failed login attempts.')
+                exit()
+            elif len(password_hash) == 0 or not gc.check_hash(password, password_hash[0][0]):
+                time.sleep(2)
+                gc.error('Invalid credentials. Please try again.')
+                attempts += 1
+            else:
+                gc.success('Credentials validated. Logging in...')
+                self.name = username
+                self.lookup()
+                valid_creds = True
+
+        # close database
+        db.close()

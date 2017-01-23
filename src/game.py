@@ -16,7 +16,6 @@ from Directory import Directory
 
 from datetime import datetime
 from threading import Thread
-from getpass import getpass
 
 # Handle keyboard interrupt shortcuts
 def signal_handler(signum, frame):
@@ -79,33 +78,10 @@ def about():
 ## Main Menu Options
 # Log in an existing account
 def login():
-   # check user credentials
-    db = Database()
-    valid_creds = False
-    attempts = 1
-    while not valid_creds:
-        username = raw_input('Username: ')
-        password = getpass()
-
-        sql = 'SELECT password FROM users WHERE username = %s'
-        password_hash = db.get_query(sql, [username])
-
-        if attempts > 4:
-            gc.error('Disconnecting after 5 failed login attempts.')
-            exit()
-        elif len(password_hash) == 0 or not gc.check_hash(password, password_hash[0][0]):
-            time.sleep(2)
-            gc.error('Invalid credentials. Please try again.')
-            attempts += 1
-        else:
-
-            gc.success('Credentials validated. Logging in...')
-            user = User(username)
-            user.lookup()
-            profile(user)
-
-    # close database
-    db.close()
+    # check user credentials
+    user = User()
+    user.login()
+    profile(user)
 
 # Register a new user account
 def register():
