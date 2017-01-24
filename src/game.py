@@ -88,7 +88,7 @@ def login():
 def register():
     user = User()
     user.register()
-    user.profile()
+    profile(user, new_login = True)
 
 # Establish a connection to IRC
 def show_chat(user):
@@ -158,7 +158,7 @@ def prompt(user):
                 exists = False
                 # check if file exists
                 for file in directory.files:
-                    if obj_name == file.name: 
+                    if obj_name == file.name:
                         # delete the file
                         file = File(obj_name, directory)
                         file.delete()
@@ -169,8 +169,8 @@ def prompt(user):
                     for subdir in directory.subdirs:
                         if obj_name == subdir.name:
                             # delete the subdirectory
+                            subdir = Directory(name = obj_name, parent_id = directory.id)
                             exists = True
-                            subdir = Directory(obj_name, parent_id = directory.id)
                             confirm = raw_input('Really delete directory ' + obj_name + '? (Y/N): ')
                             if confirm.lower() == 'y':
                                 subdir.delete()
@@ -190,7 +190,7 @@ def prompt(user):
         # show objects in current directory
         elif base_cmd in ['ls', 'dir']:
             directory.print_contents()
-        
+
         # change directory
         elif base_cmd == 'cd':
             if len(cmds) > 1:
@@ -233,6 +233,10 @@ def prompt(user):
         # show disk info
         elif base_cmd == 'disk':
             user.computer.print_disk_info()
+
+        # show contents of file
+        elif base_cmd == 'view':
+            pass
 
         # exit the game (TODO: remove this for production)
         elif base_cmd == 'exit':

@@ -105,6 +105,7 @@ class Directory:
                     row = response[i]
                     name = row[1]
                     directory = Directory(self.username, name, self.name)
+                    directory.lookup()
                     self.subdirs.append(directory)
                     i += 1
 
@@ -164,4 +165,21 @@ class Directory:
 
     # permanently delete this directory and its contents
     def delete(self):
-        pass
+        self.lookup()
+        # delete subdirectories
+        print self.subdirs
+        for subdir in self.subdirs:
+            subdir.delete()
+
+        # delete files in directory
+        for file in self.files:
+            file.delete()
+
+        db = Database()
+
+        # delete self
+        sql = 'DELETE FROM directories WHERE id = %s'
+        args = [self.id]
+        db.post_query(sql, args)
+
+        db.close()
