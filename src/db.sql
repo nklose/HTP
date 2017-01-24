@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS computers
     ram INT(8) DEFAULT 512, -- total RAM in MB
     cpu INT(8) DEFAULT 512, -- total CPU speed in MHz
     hdd INT(8) DEFAULT 1, -- total hard drive space in GB
-    disk_free INT(8) DEFAULT 1, -- total free disk space in GB
+    disk_free INT(8) DEFAULT 1, -- total free disk space in MB
     fw_level INT(3) DEFAULT 1,  -- strength of best firewall on system
     av_level INT(3) DEFAULT 1,  -- strength of best antivirus software
     cr_level INT(3) DEFAULT 1,  -- strength of best password cracker
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS computers
 CREATE TABLE IF NOT EXISTS directories
 (
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
-    dir_name VARCHAR(32) NOT NULL,
+    dir_name VARCHAR(16) NOT NULL,
     parent_id INT(12) NOT NULL,
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     PRIMARY KEY(id)

@@ -5,7 +5,7 @@ class File:
     def __init__(self, name, parent, content = '', type = 'txt', level = 1, size = 0):
         self.name = name
         self.parent = parent
-        self.parent_id = parent.get_id()
+        self.parent_id = parent.id
         self.content = content
         self.type = type
         self.level = level
@@ -59,5 +59,14 @@ class File:
             sql = 'UPDATE directories SET file_name = %s, parent_id = %s, content = %s '
             sql += ' file_type = %s, file_level = %s, file_size = %s'
 
+        db.post_query(sql, args)
+        db.close()
+
+    # permanently delete this file
+    def delete(self):
+        self.lookup()
+        db = Database()
+        sql = 'DELETE FROM files WHERE id = %s'
+        args = [self.id]
         db.post_query(sql, args)
         db.close()

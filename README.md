@@ -2,7 +2,7 @@
 A CLI-based hacking strategy game/MMO which is deployed on a Linux SSH server. Clients interact through an SSH client. The game should be hosted on a *nix server.
 
 # Deployment
-1. Install an SSH server and allow remote connectionse
+1. Install an SSH server and allow remote connections
   
   1.1. Open a terminal and type `sudo apt-get install openssh-server`
   
@@ -18,6 +18,7 @@ A CLI-based hacking strategy game/MMO which is deployed on a Linux SSH server. C
 6. Install necessary Python libraries with `pip install MySQLdb termcolor`
 7. Create a file `/htp/dbcreds.txt` with your database username on the first line and your password on the second line.
 8. If desired, uncomment the lines in .py scripts that disable keyboard shortcuts like Ctrl-C or Ctrl-Z
+9. Set the `htpuser` and `htppass` environment variables to the database credentials the game should use. For example, to set the `htpuser` password to `secr3t` you could add the line `export htpuser='secr3t'` to your `~/.bashrc` file.
 9. Run the game with `python game.py`.
 
 # Testing

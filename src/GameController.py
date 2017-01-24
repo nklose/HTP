@@ -8,20 +8,26 @@ import random
 from datetime import datetime
 from termcolor import colored
 
-time_format = '%Y-%m-%d %H:%M:%S'
+# constants
+GAME_VERSION = 0.1                  # current version of HTP
+GAME_TIMESTAMP = '2016-01-23'       # date on which game was last updated
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'   # standard timestamp format
+DIR_MAX_LENGTH = 16                 # max chars for a directory name
+DIR_MAX_NEST = 6                    # directory nesting maximum
+DIR_SIZE = 32                       # size on disk one directory takes up
 
 # gets the current timestamp
 def current_time():
     ts = time.time()
-    return datetime.fromtimestamp(ts).strftime(time_format)
+    return datetime.fromtimestamp(ts).strftime(TIME_FORMAT)
 
 # converts a string to a timestamp
 def string_to_ts(string):
-    return datetime.strptime(string, time_format)
+    return datetime.strptime(string, TIME_FORMAT)
 
 # converts a timestamp to a string
 def ts_to_string(ts):
-    return datetime.strftime(ts, time_format)
+    return datetime.strftime(ts, TIME_FORMAT)
 
 # Generate a random password
 def gen_password():
@@ -64,6 +70,10 @@ def warning(message):
 # Error Message
 def error(message):
     print(colored('  ' + message, 'red'))
+
+# Report Bug Message
+def report(id):
+    print(colored('  [E' + str(id) + ']: An unexpected error occurred. Please report this bug.'))
 
 # Info Message
 def info(message):

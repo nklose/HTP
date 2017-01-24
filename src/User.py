@@ -96,22 +96,25 @@ class User:
         msg_box.add_property('RAM', str(c.ram) + ' MB')
         msg_box.add_property('CPU', str(c.cpu) + ' MHz')
         msg_box.add_property('Disk', str(c.hdd) + ' GB')
-        msg_box.add_property('Free', str(c.disk_free) + ' GB')
+        msg_box.add_property('Free', str(c.disk_free) + ' MB')
         msg_box.add_property('Firewall', 'Level ' + str(c.fw_level))
         msg_box.add_property('Antivirus', 'Level ' + str(c.av_level))
         msg_box.add_property('Cracker', 'Level ' + str(c.cr_level))
         msg_box.hr()
         msg_box.add_property('IP Address', c.ip)
-        msg_box.add_property('Comp. Password', str(c.password))
+        msg_box.add_property('Root Password', str(c.password))
         msg_box.hr()
         # add user details
         msg_box.add_property('Handle', self.handle)
-        msg_box.add_property('Last Login', str(self.last_login))
+        msg_box.add_property('Last Login', str(self.last_login) + ' [MST]')
         # number of bank accounts
         msg_box.add_property('Total Funds', str(total_funds) + ' dollars')
         msg_box.add_property('# of Accounts', str(num_accounts))
 
         msg_box.display()
+        os_msg = 'You are running YardleOS ' + str(gc.GAME_VERSION) + ' (last updated '
+        os_msg += gc.GAME_TIMESTAMP + ')'
+        gc.msg(os_msg)
 
     def login(self):
         db = Database()
@@ -243,3 +246,10 @@ class User:
 
         # close database
         db.close()
+
+    # update last login time on user login
+    def new_login(self):
+        self.last_login = gc.current_time()
+        self.save()
+        log_entry = 'new session for ' + self.handle + ' [' + self.computer.ip + ']'
+        self.computer.add_log_entry(log_entry)

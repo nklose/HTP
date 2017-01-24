@@ -19,6 +19,9 @@ class Computer:
         self.domain_name = None
         self.id = -1
         self.last_login = gc.current_time()
+        self.folder_count = 0
+        self.file_count = 0
+        self.root_folder_id = -1
         self.exists = False
 
     # gets information from database for a specific computer IP if it exists
@@ -58,6 +61,14 @@ class Computer:
             self.fw_level = int(result[0][11])
             self.av_level = int(result[0][12])
             self.cr_level = int(result[0][13])
+            self.check_space()
+
+            # get root folder ID
+            sql = 'SELECT * FROM directories WHERE parent_id = %s AND computer_id = %s'
+            args = [0, self.id]
+            result = db.get_query(sql, args)
+            if len(result) > 0:
+                self.root_folder_id = int(result[0][0])
         db.close()
 
     # writes the current object's state to the database
@@ -90,4 +101,93 @@ class Computer:
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
                 self.fw_level, self.av_level, self.cr_level, self.ip]
             db.post_query(sql, args)
+        db.close()
+
+    # check how much disk space is free
+    def check_space(self):
+        db = Database()
+
+        # get a list of all directories
+        total_bytes = 0
+        self.folder_count = 0
+        self.file_count = 0
+        sql = 'SELECT * FROM directories WHERE computer_id = %s'
+        args = [self.id]
+        result = db.get_query(sql, args)
+        if result != None:
+            for d in result:
+                dir_id = d[0]
+                total_bytes += gc.DIR_SIZE # the directory itself takes up some space
+                self.folder_count += 1
+                sql = 'SELECT * FROM files WHERE parent_id = %s'
+                args = [dir_id]
+                f_result = db.get_query(sql, args)
+                for file in f_result:
+                    self.file_count += 1
+                    f_size = 0
+                    f_type = file[4]
+                    if f_type == 'txt': # for text files, size is length of name and content
+                        f_size = len(file[1]) + len(file[3]) 
+                    else:
+                        f_size = int(file[6])
+
+                    total_bytes += f_size
+            total_megabytes = int(total_bytes / 1024 / 1024)
+            self.disk_free = self.hdd * 1024 - int(total_bytes // 1024 // 1024)
+
+        db.close()
+
+    # shows information about this computer's disk
+    def print_disk_info(self):
+        self.check_space()
+        gc.msg_pair('Total Folders: ', str(self.folder_count))
+        gc.msg_pair('Total Files:   ', str(self.file_count))
+        gc.msg_pair('Disk Size:     ', str(self.hdd) + ' GB')
+        gc.msg_pair('Disk Free:     ', str(self.disk_free) + ' MB')
+
+    # adds an entry to the log, and creates it if it doesn't already exist
+    def add_log_entry(self, text):
+        db = Database()
+
+        # check for the folder ~/os
+        sql = 'SELECT * FROM directories WHERE dir_name = %s AND computer_id = %s '
+        sql += 'AND parent_id = %s'
+        args = ['os', self.id, self.root_folder_id]
+        result = db.get_query(sql, args)
+        if len(result) == 0:
+            # create the system directory
+            sql = 'INSERT INTO directories (dir_name, parent_id, computer_id) VALUES '
+            sql += '(%s, %s, %s)'
+            args = ['os', self.root_folder_id, self.id]
+            db.post_query(sql, args)
+
+        # get the system directory's ID
+        sql = 'SELECT * FROM directories WHERE dir_name = %s AND computer_id = %s '
+        sql += 'AND parent_id = %s'
+        args = ['os', self.id, self.root_folder_id]
+        sys_dir_id = int(db.get_query(sql, args)[0][0])
+
+        # check for logfile
+        sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
+        args = ['log.txt', sys_dir_id]
+        result = db.get_query(sql, args)
+        if len(result) == 0:
+            # create the logfile
+            sql = 'INSERT INTO files (file_name, parent_id, content, file_type, file_level, file_size) '
+            sql += 'VALUES (%s, %s, %s, %s, %s, %s)'
+            create_entry = '[' + gc.current_time() + '] LOG FILE CREATED\n'
+            args = ['log.txt', sys_dir_id, create_entry, 'txt', 1, len(create_entry)]
+            db.post_query(sql, args)
+
+        # get the ID of the logfile
+        sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
+        args = ['log.txt', sys_dir_id]
+        log_id = int(db.get_query(sql, args)[0][0])
+
+        # finally, add text to the logfile
+        sql = 'UPDATE files SET content = CONCAT(content, %s) WHERE id = %s'
+        log_entry = '[' + gc.current_time() + '] ' + text + '\n'
+        args = [log_entry, log_id]
+        db.post_query(sql, args)
+
         db.close()
