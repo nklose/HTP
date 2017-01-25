@@ -1,6 +1,6 @@
 # Main controller for HTP
 # Collection of universal utility functions
-
+import os
 import time
 import hashlib
 import random
@@ -15,6 +15,10 @@ TIME_FORMAT = '%Y-%m-%d %H:%M:%S'   # standard timestamp format
 DIR_MAX_LENGTH = 16                 # max chars for a directory name
 DIR_MAX_NEST = 6                    # directory nesting maximum
 DIR_SIZE = 32                       # size on disk one directory takes up
+FILE_MAX_LENGTH = 32                # max length of a file name
+DEBUG_LEVEL = 2                     # verbosity; 0=disabled, 1=important, 2=info
+BOX_WIDTH = 70                      # width of text box in characters
+LONG_FILE_CUTOFF = 10000            # length at which a file is considered a long file
 
 # gets the current timestamp
 def current_time():
@@ -82,3 +86,36 @@ def info(message):
 # Paired Message
 def msg_pair(msg1, msg2):
     print(colored('  ' + msg1 + ' ', 'cyan') + colored(msg2, 'white'))
+
+# Debug Message
+def debug(message, level = 2):
+    if DEBUG_LEVEL >= level:
+        label = ''
+        if level == 1:
+            label = colored('  [DEBUG] ', 'red')
+        elif level == 2:
+            label = colored('  [INFO] ', 'yellow')
+        print(label + colored(message, 'white'))
+
+# Clear screen
+def clear():
+    os.system('clear')
+
+# Returns a number of bytes as a human-readable string
+def hr_bytes(num):
+    # gigabytes
+    if num > 1024 * 1024 * 1024 * 5:
+        return str(num / 1024 / 1024 / 1024) + ' GB'
+    elif num > 1024 * 1024 * 5:
+        return str(num / 1024 / 1024) + ' MB'
+    elif num > 1024 * 5:
+        return str(num / 1024) + ' KB'
+    else:
+        return str(num) + ' B'
+
+# Returns detailed file type from extension string
+def str_to_type(str):
+    if str == 'txt':
+        return 'Plain Text'
+    elif str == 'exe':
+        return 'Executable Program'

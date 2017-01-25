@@ -1,6 +1,8 @@
 import os
 import MySQLdb
 
+import GameController as gc
+
 class Database:
 
     def __init__(self):

@@ -1,13 +1,16 @@
+import GameController as gc
+
 from Database import Database
+from MessageBox import MessageBox
 
 class File:
 
-    def __init__(self, name, parent, content = '', type = 'txt', level = 1, size = 0):
+    def __init__(self, name, parent, content = '', f_type = 'txt', level = 1, size = 0):
         self.name = name
         self.parent = parent
         self.parent_id = parent.id
         self.content = content
-        self.type = type
+        self.type = f_type
         self.level = level
         self.size = size
         self.exists = False
@@ -30,7 +33,10 @@ class File:
             self.content = result[0][3]
             self.type = result[0][4]
             self.level = int(result[0][5])
-            self.size = int(result[0][6])
+            if self.type == 'txt':
+                self.size = len(self.name) + len(self.content)
+            else:
+                self.size = int(result[0][6])
 
         db.close()
 
@@ -70,3 +76,32 @@ class File:
         args = [self.id]
         db.post_query(sql, args)
         db.close()
+
+    # shows general information about a file
+    def print_info(self):
+        self.lookup()
+        mb = MessageBox()
+        mb.title = self.name + ' [' + str(self.size) + ' bytes]'
+        mb.add_property('Total Size', gc.hr_bytes(self.size))
+        mb.add_property('File Type', gc.str_to_type(self.type))
+        mb.add_property('Parent Folder', self.parent.fullpath)
+        mb.add_property('Level', str(self.level))
+        mb.display()
+
+    # prints the contents of a file
+    def print_contents(self):
+        # construct message box
+        mb = MessageBox()
+        mb.title = self.name + ' [' + str(self.size) + ' bytes]'
+        mb.add_file(self.content)
+
+        # check for long file
+        if self.size > gc.LONG_FILE_CUTOFF:
+            gc.warning(self.name + ' is quite big (' + str(self.size) + ' bytes).')
+            confirm = raw_input('  Open the file anyway? (Y/N): ')
+            if confirm.lower() == 'y':   
+                mb.display()
+            else:
+                gc.warning('File not displayed.')
+        else:
+            mb.display()

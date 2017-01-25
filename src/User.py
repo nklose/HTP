@@ -6,6 +6,7 @@ import GameController as gc
 from Database import Database
 from Computer import Computer
 from MessageBox import MessageBox
+from Directory import Directory
 
 from datetime import datetime
 from getpass import getpass
@@ -253,3 +254,15 @@ class User:
         self.save()
         log_entry = 'new session for ' + self.handle + ' [' + self.computer.ip + ']'
         self.computer.add_log_entry(log_entry)
+
+    # returns the home directory of the user
+    def get_home_dir(self):
+        db = Database()
+        sql = 'SELECT * FROM directories WHERE computer_id = %s AND dir_name = %s'
+        args = [self.computer.id, '~']
+        result = db.get_query(sql, args)
+        home_dir_id = int(result[0][0])
+        home_dir = Directory(id = home_dir_id)
+        home_dir.lookup()
+        return home_dir
+

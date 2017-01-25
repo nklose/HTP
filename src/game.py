@@ -23,9 +23,9 @@ def signal_handler(signum, frame):
 #signal.signal(signal.SIGINT, signal_handler)   # Disable Ctrl-C
 
 def main():
-    print('\n')
+    gc.clear()
 
-    print('\tWelcome to Hack the Planet!')
+    print('\n\tWelcome to Hack the Planet!')
 
     valid_choice = False
     while not valid_choice:
@@ -99,8 +99,7 @@ def show_chat(user):
 # Prompt the user for input and respond accordingly.
 def prompt(user):
     db = Database()
-    directory = Directory(user.name, '~') # start in home directory
-    directory.lookup()
+    directory = user.get_home_dir() # start in home directory
 
     show_prompt = True
     while show_prompt:
@@ -113,8 +112,9 @@ def prompt(user):
             gc.msg('- [ls|dir] - shows objects in current directory')
             gc.msg('- [cd <dest>] - changes directory to <dest>; use .. to go up one level')
             gc.msg('- [edit <file>] - starts text editor for <file>')
-            gc.msg('- [view <file>] - outputs the contents of <file>')
+            gc.msg('- [view|cat <file>] - outputs the contents of <file>')
             gc.msg('- [md|mkdir <dir>] - creates a new directory <dir>')
+            gc.msg('- [mf|mkfile <file>] - creates a new file <file>')
             gc.msg('- [rm|del <object>] - permanently deletes <object> and its contents')
             gc.msg('- [disk] - shows information about disk usage')
         elif base_cmd == 'chat':
@@ -131,58 +131,78 @@ def prompt(user):
                     gc.error('Directory names can contain at most ' + str(gc.DIR_MAX_LENGTH) + ' characters.')
                 else:
                     # check if name is already taken
-                    taken = False
-                    for file in directory.files:
-                        if file.name == dir_name:
-                            gc.error('That directory already exists here.')
-                            taken = True
-                    if not taken:
+                    d = Directory(dir_name, directory.id)
+                    d.lookup()
+                    if d.exists:
+                        gc.error('That directory already exists here.')
+                    elif False:
                         # check if there is enough room on the disk
+                        pass
+                    elif directory.nesting > gc.DIR_MAX_NEST:
                         # check if the nesting level is too deep
-                        if directory.nesting > gc.DIR_MAX_NEST:
-                            gc.error('Sorry, directories can be nested more than ' + str(gc.DIR_MAX_NEST) + ' deep.')
+                        gc.error('Sorry, directories can be nested more than ' + str(gc.DIR_MAX_NEST) + ' deep.')
+                        
+                    else:
                         # create the directory
-                        else:
-                            new_dir = Directory(user.name, dir_name, directory.id, directory.name, user.computer.id)
-                            new_dir.save()
-                            gc.msg('New directory ' + dir_name + ' successfully created.')
+                        d.username = user.name
+                        d.parent_name = directory.name
+                        d.comp_id = user.computer.id
+                        d.save()
+                        gc.msg('New directory ' + dir_name + ' successfully created.')
             else:
                 # show command usage
                 gc.msg('Enter md [dir] to create a new directory named [dir].')
+
+        # create a new file
+        elif base_cmd in ['mf', 'mkfile']:
+            if len(cmds) > 1:
+                f_name = cmds[1] + '.txt'
+                # check if name is valid
+                if not cmds[1].isalnum():
+                    gc.error('File names can only contain letters and numbers.')
+                    gc.warning('Note that .txt will be automatically appended to your filename.')
+                elif len(f_name) > gc.FILE_MAX_LENGTH:
+                    gc.error('File names can contain at most ' + str(gc.FILE_MAX_LENGTH) + 'characters.')
+                else:
+                    # check if name is already taken
+                    file = File(f_name, directory)
+                    file.lookup()
+                    if file.exists:
+                        gc.error('That file already exists here.')
+                    else:
+                        file.save()
+                        gc.success('File ' + f_name + ' created successfully.')
+            else:
+                # show command usage
+                gc.msg('Enter mf [file] to create a new text file named [file].txt')
 
         # remove a directory
         elif base_cmd in ['rm', 'del']:
             if len(cmds) > 1:
                 obj_name = cmds[1]
-                deleted = False
-                exists = False
-                # check if file exists
-                for file in directory.files:
-                    if obj_name == file.name:
-                        # delete the file
-                        file = File(obj_name, directory)
-                        file.delete()
-                        deleted = True
-                        exists = True
-                        gc.success('Deleted file ' + obj_name)
-                if not deleted:
-                    for subdir in directory.subdirs:
-                        if obj_name == subdir.name:
-                            # delete the subdirectory
-                            subdir = Directory(name = obj_name, parent_id = directory.id)
-                            exists = True
-                            confirm = raw_input('Really delete directory ' + obj_name + '? (Y/N): ')
-                            if confirm.lower() == 'y':
-                                subdir.delete()
-                                deleted = True
-                                gc.success('Deleted directory ' + obj_name)
-                            else:
-                                gc.warning('Directory ' + obj_name + ' was not deleted')
-
-                directory.lookup()
-
-                if not exists:
-                    gc.error('That object does not exist here.')
+                
+                # check if entered name matches a file
+                file = File(obj_name, directory)
+                file.lookup()
+                if file.exists:
+                    file.delete()
+                elif obj_name == '~':
+                    gc.error('You cannot delete the home directory.')
+                elif obj_name == '.':
+                    gc.error('You cannot delete the directory you are currently in.')
+                else:
+                    # check if entered name matches a directory
+                    d = Directory(obj_name, directory.id)
+                    d.lookup()
+                    if d.exists:
+                        confirm = raw_input('Really delete directory ' + obj_name + '? (Y/N): ')
+                        if confirm.lower() == 'y':
+                            d.delete()
+                            gc.success('Deleted directory ' + obj_name)
+                        else:
+                            gc.warning('Directory ' + obj_name + ' was not deleted')
+                    else:
+                        gc.error('That object does not exist here.')
             else:
                 # show command usage
                 gc.msg('Enter rm [object] to permanently delete a file or directory.')
@@ -206,13 +226,7 @@ def prompt(user):
                     else:
                         gc.report(1)
                 elif cmds[1] == '~':
-                    new_dir.name = '~'
-                    new_dir.username = user.name
-                    new_dir.lookup()
-                    if new_dir.exists:
-                        directory = new_dir
-                    else:
-                        gc.report(2)
+                    directory = user.get_home_dir()
                 else:
                     new_dir.name = cmds[1]
                     new_dir.parent_id = directory.id
@@ -235,8 +249,50 @@ def prompt(user):
             user.computer.print_disk_info()
 
         # show contents of file
-        elif base_cmd == 'view':
-            pass
+        elif base_cmd in ['view', 'cat']:
+            if len(cmds) > 1:
+                f_name = cmds[1]
+                f = File(f_name, directory)
+                f.lookup()
+                if f.exists:
+                    f.print_contents()
+                else:
+                    # check if file exists after adding '.txt'
+                    f_name += '.txt'
+                    f = File(f_name, directory)
+                    f.lookup()
+                    if f.exists:
+                        f.print_contents()
+                    else:
+                        gc.error('That file doesn\'t exist here.')
+            else:
+                # show command usage
+                gc.msg('Enter view [file] to view the contents of [file].')
+
+        # show general info about an object
+        elif base_cmd == 'info':
+            if len(cmds) > 1:
+                # check for file with matching name
+                name = cmds[1]
+                f = File(name, directory)
+                f.lookup()
+
+                if name == '.':
+                    directory.print_info()
+                elif name == '~':
+                    user.get_home_dir().print_info()
+                elif f.exists:
+                    f.print_info()
+                else:
+                    d = Directory(name, directory.id)
+                    d.lookup()
+                    if d.exists:
+                        d.print_info()
+                    else:
+                        gc.error('That file doesn\'t exist here.')
+            else:
+                # show command usage
+                gc.msg('Get general info about an object by typing info [object].')
 
         # exit the game (TODO: remove this for production)
         elif base_cmd == 'exit':

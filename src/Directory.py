@@ -2,23 +2,22 @@ import GameController as gc
 
 from File import File
 from Database import Database
+from MessageBox import MessageBox
 
 from termcolor import colored
 
 class Directory:
 
-    def __init__(self, username = '', name = '', parent_id = -1, parent_name = '', comp_id = -1, id = -1):
-        self.username = username
+    def __init__(self, name = '', parent_id = -1, id = -1):
         self.name = name
-        self.parent_name = parent_name
         self.parent_id = parent_id
         self.files = []
         self.subdirs = []
-        self.comp_id = comp_id
         self.id = id
         self.exists = False
         self.fullpath = '~'
         self.nesting = 0
+        self.size = 0
 
     # gets information from database about this directory if it exists
     def lookup(self):
@@ -37,16 +36,6 @@ class Directory:
             sql = 'SELECT * FROM directories WHERE parent_id = %s AND dir_name = %s'
             args = [self.parent_id, self.name]
             can_lookup = True
-        # search by username and directory name (first result only)
-        elif self.username != '' and self.name != '':
-            # get the user's computer ID
-            sql = 'SELECT computer_id FROM users WHERE username = %s'
-            result = db.get_query(sql, [self.username])
-            if len(result) > 0:
-                self.comp_id = int(result[0][0])
-                sql = 'SELECT * FROM directories WHERE computer_id = %s'
-                args = [self.comp_id]
-                can_lookup = True
 
         # perform the lookup if the object has enough information
         if can_lookup:
@@ -54,6 +43,7 @@ class Directory:
             if len(result) > 0:
                 self.exists = True
                 self.id = int(result[0][0])
+                self.name = result[0][1]
                 self.parent_id = int(result[0][2])
                 self.comp_id = int(result[0][3])
 
@@ -80,6 +70,8 @@ class Directory:
                         pid = 0
                         self.fullpath = '~/' + self.fullpath
 
+                self.size = gc.DIR_SIZE # start counting total size
+
                 # get files in this directory
                 self.files = []
                 sql = 'SELECT file_name FROM files WHERE parent_id = %s'
@@ -93,6 +85,7 @@ class Directory:
                     file = File(name, self)
                     file.lookup()
                     self.files.append(file)
+                    self.size += file.size
                     i += 1
 
                 # get subdirectories
@@ -100,13 +93,12 @@ class Directory:
                 sql = 'SELECT * FROM directories WHERE parent_id = %s'
                 args = [self.id]
                 response = db.get_query(sql, args)
-                i = 0
-                while i < len(response):
-                    row = response[i]
-                    name = row[1]
-                    directory = Directory(self.username, name, self.name)
-                    directory.lookup()
-                    self.subdirs.append(directory)
+                for subdir in response:
+                    dir_name = subdir[1]
+                    d = Directory(name = dir_name, parent_id = self.id)
+                    d.lookup()
+                    self.subdirs.append(d)
+                    self.size += d.size
                     i += 1
 
         db.close()
@@ -167,8 +159,8 @@ class Directory:
     def delete(self):
         self.lookup()
         # delete subdirectories
-        print self.subdirs
         for subdir in self.subdirs:
+            subdir.lookup()
             subdir.delete()
 
         # delete files in directory
@@ -183,3 +175,15 @@ class Directory:
         db.post_query(sql, args)
 
         db.close()
+
+    # shows general information about a directory
+    def print_info(self):
+        self.lookup()
+        mb = MessageBox()
+        mb.title = self.name + ' [' + str(self.size) + ' bytes]'
+        mb.add_property('Total Size', gc.hr_bytes(self.size))
+        mb.add_property('Full Path', self.fullpath)
+        mb.add_property('Files', self.get_files())
+        mb.add_property('Subdirectories', self.get_subdirs())
+
+        mb.display()
