@@ -15,6 +15,9 @@ class File:
         self.size = size
         self.exists = False
         self.id = -1
+        self.creation_time = gc.current_time()
+        self.modified_time = self.creation_time
+
 
         if type == 'txt':
             self.size = len(content)
@@ -22,9 +25,16 @@ class File:
     # gets information from database about this file if it exists
     def lookup(self):
         db = Database()
+        sql = ''
+        args = []
 
-        sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
-        args = [self.name, self.parent_id]
+        if self.id != -1:
+            sql = 'SELECT * FROM files WHERE id = %s'
+            args = [self.id]
+        else:
+            sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
+            args = [self.name, self.parent_id]
+
         result = db.get_query(sql, args)
 
         if len(result) > 0: # file exists
@@ -33,6 +43,8 @@ class File:
             self.content = result[0][3]
             self.type = result[0][4]
             self.level = int(result[0][5])
+            self.creation_time = gc.ts_to_string(result[0][7])
+            self.modified_time = gc.ts_to_string(result[0][8])
             if self.type == 'txt':
                 self.size = len(self.name) + len(self.content)
             else:
@@ -55,15 +67,19 @@ class File:
     # synchronize object with database
     def save(self):
         db = Database()
+
+        # update modified timestamp
+        self.modified_time = gc.current_time()
+
         args = [self.name, self.parent_id, self.content, self.type,
-                self.level, self.size]
+                self.level, self.size, self.modified_time]
 
         if not self.exists:
             sql = 'INSERT INTO files (file_name, parent_id, content, file_type, '
-            sql += 'file_level, file_size) VALUES (%s, %s, %s, %s, %s, %s)'
+            sql += 'file_level, file_size, modified_time) VALUES (%s, %s, %s, %s, %s, %s, %s)'
         else:
             sql = 'UPDATE directories SET file_name = %s, parent_id = %s, content = %s '
-            sql += ' file_type = %s, file_level = %s, file_size = %s'
+            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = %s'
 
         db.post_query(sql, args)
         db.close()
@@ -81,11 +97,13 @@ class File:
     def print_info(self):
         self.lookup()
         mb = MessageBox()
-        mb.title = self.name + ' [' + gc.hr_large(self.size) + ']'
+        mb.title = self.name + ' [' + gc.hr_large(self.size) + ' bytes]'
         mb.add_property('Total Size', gc.hr_bytes(self.size))
         mb.add_property('File Type', gc.str_to_type(self.type))
         mb.add_property('Parent Folder', self.parent.fullpath)
         mb.add_property('Level', str(self.level))
+        mb.add_property('Created On', self.creation_time)
+        mb.add_property('Modified On', self.modified_time)
         mb.display()
 
     # prints the contents of a file
@@ -97,7 +115,7 @@ class File:
 
         # check for long file
         if self.size > gc.LONG_FILE_CUTOFF:
-            gc.warning(self.name + ' is quite big (' + str(self.size) + ' bytes).')
+            gc.warning(self.name + ' is quite big (' + gc.hr_large(self.size) + ' bytes).')
             confirm = raw_input('  Open the file anyway? (Y/N): ')
             if confirm.lower() == 'y':
                 mb.display()

@@ -18,6 +18,8 @@ class Directory:
         self.fullpath = '~'
         self.nesting = 0
         self.size = 0
+        self.creation_time = gc.current_time()
+        self.modified_time = self.creation_time
 
     # gets information from database about this directory if it exists
     def lookup(self):
@@ -46,6 +48,8 @@ class Directory:
                 self.name = result[0][1]
                 self.parent_id = int(result[0][2])
                 self.comp_id = int(result[0][3])
+                self.creation_time = gc.ts_to_string(result[0][4])
+                self.modified_time = gc.ts_to_string(result[0][5])
 
                 # get parent's name
                 sql = 'SELECT * FROM directories WHERE id = %s'
@@ -107,15 +111,15 @@ class Directory:
     def save(self):
         db = Database()
         if not self.exists:
-            sql = 'INSERT INTO directories (dir_name, parent_id, computer_id) VALUES '
-            sql += '(%s, %s, %s)'
-            args = [self.name, self.parent_id, self.comp_id]
+            sql = 'INSERT INTO directories (dir_name, parent_id, computer_id, modified_time) '
+            sql += 'VALUES (%s, %s, %s)'
+            args = [self.name, self.parent_id, self.comp_id, self.modified_time]
             db.post_query(sql, args)
             self.exists = True
         else:
-            sql = 'UPDATE directories SET dir_name = %s, parent_id = %s, computer_id = %s '
-            sql += 'WHERE id = %s'
-            args = [self.name, self.parent_id, self.comp_id, self.id]
+            sql = 'UPDATE directories SET dir_name = %s, parent_id = %s, computer_id = %s, '
+            sql += 'modified_time = %s WHERE id = %s'
+            args = [self.name, self.parent_id, self.comp_id, self.id, self.modified_time]
             db.post_query(sql, args)
 
         db.close()
@@ -185,5 +189,7 @@ class Directory:
         mb.add_property('Full Path', self.fullpath)
         mb.add_property('Files', self.get_files())
         mb.add_property('Subdirectories', self.get_subdirs())
+        mb.add_property('Created On', self.creation_time)
+        mb.add_property('Modified On', self.modified_time)
 
         mb.display()

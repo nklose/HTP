@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS directories
     dir_name VARCHAR(16) NOT NULL,
     parent_id INT(12) NOT NULL,
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
+    creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(id)
 );
 
@@ -48,6 +50,8 @@ CREATE TABLE IF NOT EXISTS files
     file_type VARCHAR(4) NOT NULL,
     file_level INT(2) NOT NULL,
     file_size INT(12) NOT NULL, -- size in bytes
+    creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(id)
 );
 

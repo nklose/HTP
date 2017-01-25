@@ -189,7 +189,7 @@ class Computer:
         log_id = int(db.get_query(sql, args)[0][0])
 
         # finally, add text to the logfile
-        sql = 'UPDATE files SET content = CONCAT(content, %s) WHERE id = %s'
+        sql = 'UPDATE files SET content = CONCAT(content, %s), modified_time = now() WHERE id = %s'
         log_entry = '[' + gc.current_time() + '] ' + text + '\n'
         args = [log_entry, log_id]
         db.post_query(sql, args)
