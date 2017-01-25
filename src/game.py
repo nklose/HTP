@@ -1,20 +1,24 @@
 #!/usr/bin/python
-import signal
-import subprocess
+import os
 import pwd
 import time
+import signal
+import atexit
+import readline
+import subprocess
+
 import GameController as gc
 
-from MessageBox import MessageBox
 from User import User
+from File import File
 from Computer import Computer
 from Database import Database
-from ChatSession import ChatSession
-from File import File
 from Directory import Directory
+from MessageBox import MessageBox
+from ChatSession import ChatSession
 
-from datetime import datetime
 from threading import Thread
+from datetime import datetime
 
 # Handle keyboard interrupt shortcuts
 def signal_handler(signum, frame):
@@ -98,6 +102,16 @@ def show_chat(user):
 
 # Prompt the user for input and respond accordingly.
 def prompt(user):
+    # enable bash-like input navigation
+    cmd_file = os.path.join(os.path.expanduser('~/htp-log'), user.name)
+    try:
+        readline.read_history_file(cmd_file)
+        readline.set_history_length = 100
+    except Exception:
+        pass
+
+    atexit.register(readline.write_history_file, cmd_file)
+
     db = Database()
     directory = user.get_home_dir() # start in home directory
 
@@ -141,7 +155,7 @@ def prompt(user):
                     elif directory.nesting > gc.DIR_MAX_NEST:
                         # check if the nesting level is too deep
                         gc.error('Sorry, directories can be nested more than ' + str(gc.DIR_MAX_NEST) + ' deep.')
-                        
+
                     else:
                         # create the directory
                         d.username = user.name
@@ -180,7 +194,7 @@ def prompt(user):
         elif base_cmd in ['rm', 'del']:
             if len(cmds) > 1:
                 obj_name = cmds[1]
-                
+
                 # check if entered name matches a file
                 file = File(obj_name, directory)
                 file.lookup()
