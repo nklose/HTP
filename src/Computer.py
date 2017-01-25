@@ -1,6 +1,7 @@
 import GameController as gc
 
 from Database import Database
+from MessageBox import MessageBox
 
 class Computer:
 
@@ -9,7 +10,7 @@ class Computer:
         self.ram = 512
         self.cpu = 512
         self.hdd = 1
-        self.disk_free = 512
+        self.disk_free = self.hdd * 1024 ** 3
         self.fw_level = 1
         self.av_level = 1
         self.cr_level = 1
@@ -127,23 +128,26 @@ class Computer:
                     f_size = 0
                     f_type = file[4]
                     if f_type == 'txt': # for text files, size is length of name and content
-                        f_size = len(file[1]) + len(file[3]) 
+                        f_size = len(file[1]) + len(file[3])
                     else:
                         f_size = int(file[6])
 
                     total_bytes += f_size
-            total_megabytes = int(total_bytes / 1024 / 1024)
-            self.disk_free = self.hdd * 1024 - int(total_bytes // 1024 // 1024)
+            self.disk_free = self.hdd * 1024 ** 3 - int(total_bytes)
 
         db.close()
 
     # shows information about this computer's disk
     def print_disk_info(self):
         self.check_space()
-        gc.msg_pair('Total Folders: ', str(self.folder_count))
-        gc.msg_pair('Total Files:   ', str(self.file_count))
-        gc.msg_pair('Disk Size:     ', str(self.hdd) + ' GB')
-        gc.msg_pair('Disk Free:     ', str(self.disk_free) + ' MB')
+        mb = MessageBox()
+        mb.set_title('Disk Info')
+        mb.add_property('Total Folders', str(self.folder_count))
+        mb.add_property('Total Files', str(self.file_count))
+        mb.add_property('Disk Size', str(self.hdd) + ' GB')
+        mb.add_property('Free Space', gc.hr_bytes(self.disk_free))
+        mb.add_property('Free Space (B)', gc.hr_large(self.disk_free) + ' B')
+        mb.display()
 
     # adds an entry to the log, and creates it if it doesn't already exist
     def add_log_entry(self, text):

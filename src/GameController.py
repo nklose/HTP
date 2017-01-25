@@ -103,15 +103,22 @@ def clear():
 
 # Returns a number of bytes as a human-readable string
 def hr_bytes(num):
-    # gigabytes
-    if num > 1024 * 1024 * 1024 * 5:
-        return str(num / 1024 / 1024 / 1024) + ' GB'
-    elif num > 1024 * 1024 * 5:
-        return str(num / 1024 / 1024) + ' MB'
-    elif num > 1024 * 5:
-        return str(num / 1024) + ' KB'
+    num_bytes = float(num)
+    num_kb = num_bytes / 1024.0
+    num_mb = num_kb / 1024.0
+    num_gb = num_mb / 1024.0
+    if num_gb > 1:
+        return str(round(num_gb, 2)) + ' GB'
+    elif num_mb > 1:
+        return str(round(num_mb, 2)) + ' MB'
+    elif num_kb > 1:
+        return str(round(num_kb, 2)) + ' KB'
     else:
-        return str(num) + ' B'
+        return hr_large(int(num_bytes)) + ' B'
+
+# Adds separation commas to a large number and returns it as a string
+def hr_large(num):
+    return '{:,}'.format(num)
 
 # Returns detailed file type from extension string
 def str_to_type(str):

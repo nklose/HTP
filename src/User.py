@@ -97,7 +97,7 @@ class User:
         msg_box.add_property('RAM', str(c.ram) + ' MB')
         msg_box.add_property('CPU', str(c.cpu) + ' MHz')
         msg_box.add_property('Disk', str(c.hdd) + ' GB')
-        msg_box.add_property('Free', str(c.disk_free) + ' MB')
+        msg_box.add_property('Free', gc.hr_bytes(c.disk_free))
         msg_box.add_property('Firewall', 'Level ' + str(c.fw_level))
         msg_box.add_property('Antivirus', 'Level ' + str(c.av_level))
         msg_box.add_property('Cracker', 'Level ' + str(c.cr_level))

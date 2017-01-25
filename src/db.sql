@@ -15,15 +15,15 @@ CREATE TABLE IF NOT EXISTS computers
 (
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
     ip VARCHAR(16) NOT NULL UNIQUE,
-    password VARCHAR(16) NOT NULL, -- password used to hack into the computer
-    domain_name VARCHAR(32),
+    password VARCHAR(16) NOT NULL, -- root password for hacking into the computer
+    domain_name VARCHAR(32), -- exists if this computer is a web server
     owner_id INT(12) REFERENCES users(id),
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    bank_id INT(12) REFERENCES banks(id),
+    bank_id INT(12) REFERENCES banks(id), -- exists if this computer is a bank server
     ram INT(8) DEFAULT 512, -- total RAM in MB
     cpu INT(8) DEFAULT 512, -- total CPU speed in MHz
-    hdd INT(8) DEFAULT 1, -- total hard drive space in GB
-    disk_free INT(8) DEFAULT 1, -- total free disk space in MB
+    hdd INT(8) DEFAULT 1, -- total hard drive space in GB (smallest drive is 1 GB)
+    disk_free INT(12) DEFAULT 0, -- total free disk space in bytes
     fw_level INT(3) DEFAULT 1,  -- strength of best firewall on system
     av_level INT(3) DEFAULT 1,  -- strength of best antivirus software
     cr_level INT(3) DEFAULT 1,  -- strength of best password cracker

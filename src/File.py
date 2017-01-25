@@ -81,7 +81,7 @@ class File:
     def print_info(self):
         self.lookup()
         mb = MessageBox()
-        mb.title = self.name + ' [' + str(self.size) + ' bytes]'
+        mb.title = self.name + ' [' + gc.hr_large(self.size) + ']'
         mb.add_property('Total Size', gc.hr_bytes(self.size))
         mb.add_property('File Type', gc.str_to_type(self.type))
         mb.add_property('Parent Folder', self.parent.fullpath)
@@ -99,7 +99,7 @@ class File:
         if self.size > gc.LONG_FILE_CUTOFF:
             gc.warning(self.name + ' is quite big (' + str(self.size) + ' bytes).')
             confirm = raw_input('  Open the file anyway? (Y/N): ')
-            if confirm.lower() == 'y':   
+            if confirm.lower() == 'y':
                 mb.display()
             else:
                 gc.warning('File not displayed.')
