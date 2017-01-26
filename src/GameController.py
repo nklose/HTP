@@ -1,5 +1,17 @@
-# Main controller for HTP
-# Collection of universal utility functions
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: GameController.py
+# Collection of general utility functions for the game.
+
 import os
 import time
 import hashlib
@@ -9,16 +21,18 @@ from datetime import datetime
 from termcolor import colored
 
 # constants
-GAME_VERSION = 0.1                  # current version of HTP
-GAME_TIMESTAMP = '2016-01-23'       # date on which game was last updated
-TIME_FORMAT = '%Y-%m-%d %H:%M:%S'   # standard timestamp format
-DIR_MAX_LENGTH = 16                 # max chars for a directory name
-DIR_MAX_NEST = 6                    # directory nesting maximum
-DIR_SIZE = 32                       # size on disk one directory takes up
-FILE_MAX_LENGTH = 32                # max length of a file name
-DEBUG_LEVEL = 2                     # verbosity; 0=disabled, 1=important, 2=info
-BOX_WIDTH = 70                      # width of text box in characters
-LONG_FILE_CUTOFF = 10000            # length at which a file is considered a long file
+GAME_VERSION = 0.1                   # current version of HTP
+GAME_TIMESTAMP = '2016-01-23'        # date on which game was last updated
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'    # standard timestamp format
+CMD_LOG_DIR = '../cmd_log'           # directory to store logs of user commands
+CMD_LOG_LENGTH = 100                 # number of commands per user to save
+DIR_MAX_LENGTH = 16                  # max chars for a directory name
+DIR_MAX_NEST = 6                     # directory nesting maximum
+DIR_SIZE = 32                        # size on disk one directory takes up
+FILE_MAX_LENGTH = 32                 # max length of a file name
+DEBUG_LEVEL = 2                      # verbosity; 0=disabled, 1=important, 2=info
+BOX_WIDTH = 70                       # width of text box in characters
+LONG_FILE_CUTOFF = 10000             # length at which a file is considered a long file
 
 # gets the current timestamp
 def current_time():

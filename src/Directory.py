@@ -1,3 +1,17 @@
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: Directory.py
+# A Directory represents a virtual in-game filesystem directory on a computer.
+
 import GameController as gc
 
 from File import File
@@ -112,7 +126,7 @@ class Directory:
         db = Database()
         if not self.exists:
             sql = 'INSERT INTO directories (dir_name, parent_id, computer_id, modified_time) '
-            sql += 'VALUES (%s, %s, %s)'
+            sql += 'VALUES (%s, %s, %s, %s)'
             args = [self.name, self.parent_id, self.comp_id, self.modified_time]
             db.post_query(sql, args)
             self.exists = True

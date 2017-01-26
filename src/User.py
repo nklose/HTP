@@ -1,3 +1,19 @@
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: Database.py
+# A User represents a single player account in the game.
+# In the game, a User is known by their handle (which can be changed).
+# Usernames, emails, and passwords are only used for registration and login.
+
 import re
 import time
 

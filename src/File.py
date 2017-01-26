@@ -1,3 +1,17 @@
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: File.py
+# A File represents a virtual in-game file on a computer.
+
 import GameController as gc
 
 from Database import Database
@@ -72,14 +86,14 @@ class File:
         self.modified_time = gc.current_time()
 
         args = [self.name, self.parent_id, self.content, self.type,
-                self.level, self.size, self.modified_time]
+                self.level, self.size]
 
         if not self.exists:
             sql = 'INSERT INTO files (file_name, parent_id, content, file_type, '
-            sql += 'file_level, file_size, modified_time) VALUES (%s, %s, %s, %s, %s, %s, %s)'
+            sql += 'file_level, file_size, modified_time) VALUES (%s, %s, %s, %s, %s, %s, now())'
         else:
-            sql = 'UPDATE directories SET file_name = %s, parent_id = %s, content = %s '
-            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = %s'
+            sql = 'UPDATE files SET file_name = %s, parent_id = %s, content = %s, '
+            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now()'
 
         db.post_query(sql, args)
         db.close()

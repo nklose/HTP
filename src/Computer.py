@@ -1,3 +1,25 @@
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: Computer.py
+# A Computer represents a virtual workstation (if owned by a User) 
+# or a virtual server (if owned by the game itself).
+# Some Computers may be running their own web or bank servers.
+# Each Computer has at least:
+# - a set of hardware which determines its performance
+# - an IP address that allows it to connect to the network
+# - a randomly-generated root password which can be hacked by other Users
+# - a root directory with a file system which may contain other files and directories
+# - a log file which records any major events on the computer
+
 import GameController as gc
 
 from Database import Database

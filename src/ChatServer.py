@@ -1,8 +1,23 @@
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: ChatServer.py
+
 # This script runs the HTP chat server.
+# It should be kept running in order to enable chat functionality via IRC.
 # It authenticates with a single account to an IRC channel and relays messages between
 # the channel and the game client via a log file.
 # Each line in the log file represents one message.
 # The log file is automatically cleared once it reaches its maximum size.
+# The game client runs a separate routine which reads and writes to the same log file.
 #
 # Messages are of the form T[D]<U> M, where:
 #   - T is the type of message (R = 'from channel', S = 'to channel', C = 'admin command')

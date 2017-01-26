@@ -1,3 +1,18 @@
+#################################################
+#   __   ____  ____  _________  _______   __    #
+# .' _| |_   ||   _||  _   _  ||_   __ \ |_ `.  #
+# | |     | |__| |  |_/ | | \_|  | |__) |  | |  #
+# | |     |  __  |      | |      |  ___/   | |  #
+# | |_   _| |  | |_    _| |_    _| |_     _| |  #
+# `.__| |____||____|  |_____|  |_____|   |__,'  #
+#                                               #
+#   48 61 63 6B  54 68 65  50 6C 61 6E 65 74    #
+#################################################
+
+# File: MessageBox.py
+# A MessageBox provies an easy way to display information on the screen
+# in an aesthetic way.
+
 import textwrap
 
 import GameController as gc
@@ -15,6 +30,7 @@ class MessageBox:
         self.label_color = 'cyan'
         self.text_color = 'white'
         self.text = []              # raw text as a list of lines
+        self.label_width = 16
 
     # Changes the title at the top of the box
     def set_title(self, title):
@@ -26,11 +42,9 @@ class MessageBox:
 
     # Adds a property with a name and value to the section
     def add_property(self, name, value):
-        label_width = 16
-
         # get filler space between name and value
         spaces = ''
-        i = label_width - len(name)
+        i = self.label_width - len(name)
         while i > 0:
             spaces += ' '
             i -= 1
@@ -41,7 +55,7 @@ class MessageBox:
 
         # add remaining spaces and end line
         spaces = ''
-        i = self.width - len(value) - 20
+        i = self.width - len(value) - self.label_width - 4
         while i > 0:
             spaces += ' '
             i -= 1
@@ -49,6 +63,10 @@ class MessageBox:
         text += colored(u'\u2502', self.border_color)
 
         self.text.append(text)
+
+    # resizes width of labels for property entries
+    def set_label_width(self, new_width):
+        self.label_width = int(new_width)
 
     # adds a word-wrapped paragraph of text
     def add_long_text(self, text):
