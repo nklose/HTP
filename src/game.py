@@ -104,11 +104,5 @@ def register():
     user.register()
     profile(user, new_login = True)
 
-# Establish a connection to IRC
-def show_chat(user):
-    print('Connecting to chat server...')
-    cs = ChatSession(user.handle)
-    profile(user)
-
 if __name__ == '__main__':
     main()

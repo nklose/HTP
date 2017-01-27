@@ -34,6 +34,9 @@ DEBUG_LEVEL = 2                      # verbosity; 0=disabled, 1=important, 2=inf
 BOX_WIDTH = 70                       # width of text box in characters
 LONG_FILE_CUTOFF = 10000             # length at which a file is considered a long file
 
+# list of valid commands
+COMMANDS = ['cat', 'cd', 'chat', 'del', 'disk', 'edit', 'ls',  'md', 'mf', 'mkdir', 'mkfile', 'rm', 'view']
+
 # gets the current timestamp
 def current_time():
     ts = time.time()

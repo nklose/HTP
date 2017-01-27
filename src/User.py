@@ -38,6 +38,7 @@ class User:
         self.last_login = gc.current_time()
         self.creation_date = gc.current_time()
         self.computer = Computer()
+        self.current_dir = -1
         self.id = -1
 
     # gets information from database for a specific username if it exists
@@ -283,3 +284,17 @@ class User:
         home_dir.lookup()
         return home_dir
 
+    # tab completer function
+    def complete(self, text, state):
+        # base commands
+        completions = gc.COMMANDS
+
+        # objects in current direcotry
+        # completions += gc.get_objects(self.current_dir)
+
+        for cmd in cmds:
+            if cmd.startswith(text):
+                if not state:
+                    return cmd
+                else:
+                    sate -= 1
