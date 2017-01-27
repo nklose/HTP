@@ -72,6 +72,10 @@ def check_hash(password, hashed_pw):
     hashed_pw, salt = hashed_pw.split(':')
     return hashed_pw == hashlib.sha256(salt.encode() + password.encode()).hexdigest()
 
+# Prompts the user with a yes or no question
+def prompt_yn(message):
+    return raw_input(colored('  ' + message + ' (Y/N): ', 'cyan')).lower() == 'y'
+
 ## Output Messages
 # Standard Message
 def msg(message):
@@ -140,3 +144,4 @@ def str_to_type(str):
         return 'Plain Text'
     elif str == 'exe':
         return 'Executable Program'
+

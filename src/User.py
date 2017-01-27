@@ -192,14 +192,15 @@ class User:
         valid_password = False
         while not valid_password:
             password = getpass()
-            confirm = getpass('Confirm: ')
             if len(password) < 6:
                 gc.error('Your password must contain 6 or more characters.')
-            elif password != confirm:
-                gc.error('Sorry, those passwords didn\'t match.')
             else:
-                valid_password = True
-                self.password = gc.hash_password(password, self.name)
+                confirm = getpass('Confirm: ')
+                if password != confirm:
+                    gc.error('Sorry, those passwords didn\'t match.')
+                else:
+                    valid_password = True
+                    self.password = gc.hash_password(password, self.name)
 
         # get a valid email address
         valid_email = False

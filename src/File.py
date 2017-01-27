@@ -51,7 +51,7 @@ class File:
 
         result = db.get_query(sql, args)
 
-        if len(result) > 0: # file exists
+        if len(result) == 1: # file exists
             self.exists = True
             self.id = int(result[0][0])
             self.content = result[0][3]
@@ -82,19 +82,25 @@ class File:
     def save(self):
         db = Database()
 
+        # update file size
+        if self.type == 'txt':
+            self.size = len(self.name) + len(self.content)
+
         # update modified timestamp
         self.modified_time = gc.current_time()
 
         args = [self.name, self.parent_id, self.content, self.type,
                 self.level, self.size]
 
+        self.lookup()
         if not self.exists:
             sql = 'INSERT INTO files (file_name, parent_id, content, file_type, '
             sql += 'file_level, file_size, modified_time) VALUES (%s, %s, %s, %s, %s, %s, now())'
         else:
             sql = 'UPDATE files SET file_name = %s, parent_id = %s, content = %s, '
-            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now()'
-
+            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now() '
+            sql += 'WHERE id = %s'
+            args.append(self.id)
         db.post_query(sql, args)
         db.close()
 
@@ -122,18 +128,21 @@ class File:
 
     # prints the contents of a file
     def print_contents(self):
-        # construct message box
-        mb = MessageBox()
-        mb.title = self.name + ' [' + str(self.size) + ' bytes]'
-        mb.add_file(self.content)
+        if len(self.content) > 0:
+            # construct message box
+            mb = MessageBox()
+            mb.title = self.name + ' [' + str(self.size) + ' bytes]'
+            mb.add_file(self.content)
 
-        # check for long file
-        if self.size > gc.LONG_FILE_CUTOFF:
-            gc.warning(self.name + ' is quite big (' + gc.hr_large(self.size) + ' bytes).')
-            confirm = raw_input('  Open the file anyway? (Y/N): ')
-            if confirm.lower() == 'y':
-                mb.display()
+            # check for long file
+            if self.size > gc.LONG_FILE_CUTOFF:
+                gc.warning(self.name + ' is quite big (' + gc.hr_large(self.size) + ' bytes).')
+                confirm = raw_input('  Open the file anyway? (Y/N): ')
+                if confirm.lower() == 'y':
+                    mb.display()
+                else:
+                    gc.warning('File not displayed.')
             else:
-                gc.warning('File not displayed.')
+                mb.display()
         else:
-            mb.display()
+            gc.error('The file you specified is blank; nothing to show.')

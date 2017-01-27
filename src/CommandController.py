@@ -24,6 +24,7 @@ from File import File
 from Database import Database
 from Directory import Directory
 from MessageBox import MessageBox
+from TextEditor import TextEditor
 
 # Prompt for a numeric input
 def prompt_num():
@@ -56,7 +57,9 @@ def prompt(user):
         cmds = cmd_str.split()
 
         # save first entered string as base command (other strings are parameters)
-        base_cmd = cmds[0]
+        base_cmd = []
+        if len(cmds) > 0:
+            base_cmd = cmds[0]
 
         # display help info
         if base_cmd == 'help':
@@ -105,6 +108,8 @@ def prompt(user):
                         d.comp_id = user.computer.id
                         d.save()
                         gc.msg('New directory ' + dir_name + ' successfully created.')
+                        log_entry = user.handle + ' created directory ' + dir_name
+                        user.computer.add_log_entry(log_entry)
             else:
                 # show command usage
                 gc.msg('Enter md [dir] to create a new directory named [dir].')
@@ -128,6 +133,8 @@ def prompt(user):
                     else:
                         file.save()
                         gc.success('File ' + f_name + ' created successfully.')
+                        log_entry = user.handle + ' created file ' + f_name
+                        user.computer.add_log_entry(log_entry)
             else:
                 # show command usage
                 gc.msg('Enter mf [file] to create a new text file named [file].txt')
@@ -142,6 +149,10 @@ def prompt(user):
                 file.lookup()
                 if file.exists:
                     file.delete()
+                    gc.success('Deleted file ' + obj_name)
+                    if obj_name != 'log.txt':
+                        log_entry = user.handle + ' deleted file ' + obj_name
+                        user.computer.add_log_entry(log_entry)
                 elif obj_name == '~':
                     gc.error('You cannot delete the home directory.')
                 elif obj_name == '.':
@@ -151,10 +162,11 @@ def prompt(user):
                     d = Directory(obj_name, directory.id)
                     d.lookup()
                     if d.exists:
-                        confirm = raw_input('Really delete directory ' + obj_name + '? (Y/N): ')
-                        if confirm.lower() == 'y':
+                        if gc.prompt_yn('Really delete directory ' + obj_name + '?'):
                             d.delete()
                             gc.success('Deleted directory ' + obj_name)
+                            log_entry = user.handle + ' deleted directory ' + obj_name
+                            user.computer.add_log_entry(log_entry)
                         else:
                             gc.warning('Directory ' + obj_name + ' was not deleted')
                     else:
@@ -207,7 +219,14 @@ def prompt(user):
                 f.lookup()
                 if f.exists:
                     # edit file in text editor
-                    pass
+                    TextEditor(f)
+                    if gc.prompt_yn('Do you want to save your changes to the file?'):
+                        f.save()
+                        gc.success('File saved successfully.')
+                        log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
+                        user.computer.add_log_entry(log_entry)
+                    else:
+                        gc.warning('File not saved.')
                 else:
                     gc.error('That file doesn\'t exist here.')
                     gc.warning('If the file is new, please create it first with \'mf\'.')
