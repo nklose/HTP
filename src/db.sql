@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS files
     file_size INT(12) NOT NULL, -- size in bytes
     creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    category VARCHAR(32) DEFAULT NULL, -- e.g. 'firewall', 'cracker'
     PRIMARY KEY(id)
 );
 

@@ -22,7 +22,9 @@
 
 import GameController as gc
 
+from File import File
 from Database import Database
+from Directory import Directory
 from MessageBox import MessageBox
 
 class Computer:
@@ -44,7 +46,7 @@ class Computer:
         self.last_login = gc.current_time()
         self.folder_count = 0
         self.file_count = 0
-        self.root_folder_id = -1
+        self.root_dir = Directory()    # root directory for this computer (i.e. '~')
         self.exists = False
 
     # gets information from database for a specific computer IP if it exists
@@ -91,7 +93,8 @@ class Computer:
             args = [0, self.id]
             result = db.get_query(sql, args)
             if len(result) > 0:
-                self.root_folder_id = int(result[0][0])
+                self.root_dir.id = int(result[0][0])
+                self.root_dir.lookup()
         db.close()
 
     # writes the current object's state to the database
@@ -178,19 +181,19 @@ class Computer:
         # check for the folder ~/os
         sql = 'SELECT * FROM directories WHERE dir_name = %s AND computer_id = %s '
         sql += 'AND parent_id = %s'
-        args = ['os', self.id, self.root_folder_id]
+        args = ['os', self.id, self.root_dir.id]
         result = db.get_query(sql, args)
         if len(result) == 0:
             # create the system directory
             sql = 'INSERT INTO directories (dir_name, parent_id, computer_id) VALUES '
             sql += '(%s, %s, %s)'
-            args = ['os', self.root_folder_id, self.id]
+            args = ['os', self.root_dir.id, self.id]
             db.post_query(sql, args)
 
         # get the system directory's ID
         sql = 'SELECT * FROM directories WHERE dir_name = %s AND computer_id = %s '
         sql += 'AND parent_id = %s'
-        args = ['os', self.id, self.root_folder_id]
+        args = ['os', self.id, self.root_dir.id]
         sys_dir_id = int(db.get_query(sql, args)[0][0])
 
         # check for logfile
@@ -217,3 +220,26 @@ class Computer:
         db.post_query(sql, args)
 
         db.close()
+
+    # adds a default set of files for new users
+    def add_default_files(self):
+        self.root_dir.lookup()
+        if self.root_dir.exists:
+            # add initial note
+            note = File('note.txt', self.root_dir)
+            note.load_note('first-note')
+            note.save()
+
+            # add basic firewall
+            fw = File('freefw-01.bin', self.root_dir)
+            fw.type = 'bin'
+            fw.size = gc.to_bytes(51.6, 'MB')
+            fw.save()
+
+            # update storage info
+            self.check_space()
+
+        else:
+            gc.error('An error occurred while creating the default files.')
+
+        

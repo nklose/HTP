@@ -25,6 +25,7 @@ from Database import Database
 from Directory import Directory
 from MessageBox import MessageBox
 from TextEditor import TextEditor
+from ChatSession import ChatSession
 
 # Prompt for a numeric input
 def prompt_num():
@@ -34,13 +35,9 @@ def prompt_num():
 def prompt(user):
     # enable bash-like input navigation
     cmd_file = os.path.join(gc.CMD_LOG_DIR, user.name + '.log')
-
     try:
         readline.read_history_file(cmd_file)
         readline.set_history_length = gc.CMD_LOG_LENGTH
-        readline.set_completer(user.complete)
-        readline.parse_and_bind('tab: complete') # tab completion
-
     except Exception:
         pass
     atexit.register(readline.write_history_file, cmd_file)
@@ -70,7 +67,7 @@ def prompt(user):
             mb = MessageBox()
             mb.set_title('Command List')
             mb.set_label_width(20)
-            mb.add_property('chat', 'opens the globalchat room')
+            mb.add_property('chat', 'opens the global chat room')
             mb.add_property('ls (dir)', 'lists objects in the current directory')
             mb.add_property('cd <dir>', 'jumps to the directory <dir>')
             mb.add_property('edit <file>', 'starts text editor for <file>')
@@ -81,9 +78,9 @@ def prompt(user):
             mb.add_property('disk', 'shows information about disk usage')
             mb.display()
         elif base_cmd == 'chat':
-            #show_chat(user)
-            gc.warning('Chat functionality is not yet working.')
-            pass
+            # switches to chat mode
+            print('Connecting to chat server...')
+            cs = ChatSession(user.handle)
 
         # create a new directory
         elif base_cmd in ['md', 'mkdir']:
@@ -123,14 +120,7 @@ def prompt(user):
         # create a new file
         elif base_cmd in ['mf', 'mkfile']:
             if len(cmds) > 1:
-                f_name = ''
-
-                # add .txt extension if necessary
-                if cmds[1][4:] == '.txt':
-                    f_name = cmds[1][:-4]
-                else:
-                    f_name += '.txt'
-
+                f_name = cmds[1] + '.txt'
                 # check if name is valid
                 if not cmds[1].isalnum():
                     gc.error('File names can only contain letters and numbers.')
@@ -241,21 +231,8 @@ def prompt(user):
                     else:
                         gc.warning('File not saved.')
                 else:
-                    # check if file exists after adding txt extension
-                    f.name += '.txt'
-                    f.lookup()
-                    if f.exists:
-                        TextEditor(f)
-                        if gc.prompt_yn('Do you want to save your changes to the file?'):
-                            f.save()
-                            gc.success('File saved successfully.')
-                            log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
-                            user.computer.add_log_entry(log_entry)
-                        else:
-                            gc.warning('File not saved.')
-                    else:
-                        gc.error('That file doesn\'t exist here.')
-                        gc.warning('If the file is new, please create it first with \'mf\'.')
+                    gc.error('That file doesn\'t exist here.')
+                    gc.warning('If the file is new, please create it first with \'mf\'.')
             else:
                 # show command usage
                 gc.msg('Enter edit [file] to start editing a text file.')

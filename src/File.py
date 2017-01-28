@@ -12,6 +12,8 @@
 # File: File.py
 # A File represents a virtual in-game file on a computer.
 
+import os
+
 import GameController as gc
 
 from Database import Database
@@ -146,3 +148,18 @@ class File:
                 mb.display()
         else:
             gc.error('The file you specified is blank; nothing to show.')
+
+    # populates the contents from a real file on disk
+    def contents_from_file(self, filepath):
+        text = ''
+        f = open(filepath, 'r')
+        lines = f.readlines()
+        for line in lines:
+            text += line
+
+        self.content = text
+
+    # loads a specific note file
+    def load_note(self, name):
+        filepath = os.path.join(gc.NOTE_DIR, name + '.note')
+        self.contents_from_file(filepath)

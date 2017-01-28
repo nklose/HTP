@@ -161,7 +161,10 @@ class Directory:
     def get_files(self):
         file_list = ''
         for file in self.files:
-            file_list += file.name + ' '
+            if file.type == 'bin':
+                file_list += colored(file.name, 'green')
+            else:
+                file_list += file.name + ' '
         return file_list
 
     # prints contents to screen

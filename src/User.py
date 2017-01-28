@@ -38,7 +38,6 @@ class User:
         self.last_login = gc.current_time()
         self.creation_date = gc.current_time()
         self.computer = Computer()
-        self.current_dir = -1
         self.id = -1
 
     # gets information from database for a specific username if it exists
@@ -166,6 +165,8 @@ class User:
         gc.msg('Your username can be between 4 and 16 characters and must be alphanumeric.')
         valid_user = False
         db = Database()
+        gc.hr()
+        
         while not valid_user:
             self.name = raw_input('Desired Username: ')
 
@@ -188,8 +189,10 @@ class User:
                     gc.msg('Username is available!')
                     valid_user = True
 
+        gc.hr()
+
         # get a valid password
-        gc.msg('\n  You can now set a password for your account.')
+        gc.msg('You can now set a password for your account.')
         valid_password = False
         while not valid_password:
             password = getpass()
@@ -203,9 +206,11 @@ class User:
                     valid_password = True
                     self.password = gc.hash_password(password, self.name)
 
+        gc.hr()
+
         # get a valid email address
         valid_email = False
-        gc.msg('\n  You will need to enter a valid email in case you forget your password.')
+        gc.msg('You will need to enter a valid email in case you forget your password.')
         while not valid_email:
             self.email = raw_input('Email Address: ')
             if re.match(r'[^@]+@[^@]+\.[^@]+', self.email):
@@ -219,8 +224,10 @@ class User:
             else:
                 gc.error('Sorry, your input was not in the right format for an email address.')
 
+        gc.hr()
+
         # get a unique in-game handle
-        gc.msg('\n  Finally, you need to choose an in-game handle that others can see.')
+        gc.msg('Finally, you need to choose an in-game handle that others can see.')
         gc.msg('This is separate from your username, and can be changed later.')
         valid_handle = False
         while not valid_handle:
@@ -238,6 +245,8 @@ class User:
                     gc.error('Sorry, that handle is taken. Please choose another.')
                 else:
                     valid_handle = True
+
+        gc.hr()
 
         # generate an IP address for the user
         valid_ip = False
@@ -260,6 +269,9 @@ class User:
         self.computer.lookup()   # get generated id for computer
 
         self.save()
+
+        # generate default directories and files
+        self.computer.add_default_files()
 
         gc.success('\n Account ' + self.name + ' created!')
 
@@ -284,17 +296,3 @@ class User:
         home_dir.lookup()
         return home_dir
 
-    # tab completer function
-    def complete(self, text, state):
-        # base commands
-        completions = gc.COMMANDS
-
-        # objects in current direcotry
-        # completions += gc.get_objects(self.current_dir)
-
-        for cmd in cmds:
-            if cmd.startswith(text):
-                if not state:
-                    return cmd
-                else:
-                    sate -= 1

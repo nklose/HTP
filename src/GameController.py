@@ -25,17 +25,15 @@ GAME_VERSION = 0.1                   # current version of HTP
 GAME_TIMESTAMP = '2016-01-23'        # date on which game was last updated
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'    # standard timestamp format
 CMD_LOG_DIR = '../cmd_log'           # directory to store logs of user commands
+NOTE_DIR = '../data/notes'           # directory to store in-game notes
 CMD_LOG_LENGTH = 100                 # number of commands per user to save
 DIR_MAX_LENGTH = 16                  # max chars for a directory name
 DIR_MAX_NEST = 6                     # directory nesting maximum
 DIR_SIZE = 32                        # size on disk one directory takes up
 FILE_MAX_LENGTH = 32                 # max length of a file name
 DEBUG_LEVEL = 2                      # verbosity; 0=disabled, 1=important, 2=info
-BOX_WIDTH = 70                       # width of text box in characters
+BOX_WIDTH = 80                       # width of text box in characters
 LONG_FILE_CUTOFF = 10000             # length at which a file is considered a long file
-
-# list of valid commands
-COMMANDS = ['cat', 'cd', 'chat', 'del', 'disk', 'edit', 'ls',  'md', 'mf', 'mkdir', 'mkfile', 'rm', 'view']
 
 # gets the current timestamp
 def current_time():
@@ -145,6 +143,25 @@ def hr_large(num):
 def str_to_type(str):
     if str == 'txt':
         return 'Plain Text'
-    elif str == 'exe':
+    elif str == 'bin':
         return 'Executable Program'
 
+# converts other units (KB, MB, GB) to bytes
+def to_bytes(amt, units):
+    if units.lower() == 'kb':
+        return amt * 1024
+    elif units.lower() == 'mb':
+        return amt * 1024 * 1024
+    elif units.lower() == 'gb':
+        return amt * 1024 * 1024 * 1024
+    else:
+        error('An error occurred during a unit conversion.')
+
+# prints a horizontal line to the screen
+def hr():
+    i = 0
+    line = ''
+    while i < BOX_WIDTH:
+        line += u'\u2500'
+        i += 1
+    print line
