@@ -13,7 +13,10 @@
 # The command controller handles processing of user-inputted commands.
 
 import os
+import re
+import time
 import atexit
+import random
 import readline
 import subprocess
 
@@ -21,6 +24,7 @@ import GameController as gc
 
 from User import User
 from File import File
+from Computer import Computer
 from Database import Database
 from Directory import Directory
 from MessageBox import MessageBox
@@ -46,13 +50,19 @@ def prompt(user):
     db = Database()
 
     # start user in home directory on login
+    computer = user.computer
     directory = user.get_home_dir()
 
     # begin command processing
     show_prompt = True
     while show_prompt:
         # get user input
-        cmd_str = raw_input(user.handle + '@localhost:' + directory.fullpath + '$ ').lower()
+        hostname = ''
+        if computer == user.computer:
+            hostname = 'localhost'
+        else:
+            hostname = computer.ip
+        cmd_str = raw_input(user.handle + '@' + hostname + ':' + directory.fullpath + '$ ').lower()
 
         # split into separate strings
         cmds = cmd_str.split()
@@ -66,8 +76,12 @@ def prompt(user):
         if base_cmd == 'help':
             mb = MessageBox()
             mb.set_title('Command List')
-            mb.set_label_width(20)
+            mb.set_label_width(25)
+            mb.add_heading('Basic Commands')
             mb.add_property('chat', 'opens the global chat room')
+            mb.add_property('disk', 'shows information about disk usage')
+            mb.add_property('log', 'prints out the system log')
+            mb.add_heading('Files and Directories')
             mb.add_property('ls (dir)', 'lists objects in the current directory')
             mb.add_property('cd <dir>', 'jumps to the directory <dir>')
             mb.add_property('edit <file>', 'starts text editor for <file>')
@@ -75,7 +89,15 @@ def prompt(user):
             mb.add_property('md (mkdir) <name>', 'creates a new directory called <name>')
             mb.add_property('mf (mkfile) <name>', 'creates a new test file called <name>')
             mb.add_property('rm (del) <obj>', 'permanently deletes <obj> and its contents')
-            mb.add_property('disk', 'shows information about disk usage')
+            mb.add_property('cp (copy) <obj> <dest>', 'creates a copy of <obj> named <dest>')
+            mb.add_property('rn (rename) <obj> <name>', 'sets <obj>\'s name to <name>')
+            mb.add_property('mv (move) <obj> <dir>', 'moves <obj> to directory <dir>')
+            mb.add_property('info <obj>', 'shows detailed info about <obj>')
+            mb.add_heading('Networking')
+            mb.add_property('ping <target>', 'sends an echo request to the IP or domain <target>')
+            mb.add_property('ssh <target>', 'attempts to log into IP or domain <target>')
+            mb.add_property('ul (upload) <path>', 'uploads the object at local path <path>')
+            mb.add_property('dl (download) <obj>', 'downloads the object <obj> to ~/downloads')
             mb.display()
         elif base_cmd == 'chat':
             # switches to chat mode
@@ -112,7 +134,7 @@ def prompt(user):
                         d.save()
                         gc.msg('New directory ' + dir_name + ' successfully created.')
                         log_entry = user.handle + ' created directory ' + dir_name
-                        user.computer.add_log_entry(log_entry)
+                        computer.add_log_entry(log_entry)
             else:
                 # show command usage
                 gc.msg('Enter md [dir] to create a new directory named [dir].')
@@ -137,7 +159,7 @@ def prompt(user):
                         file.save()
                         gc.success('File ' + f_name + ' created successfully.')
                         log_entry = user.handle + ' created file ' + f_name
-                        user.computer.add_log_entry(log_entry)
+                        computer.add_log_entry(log_entry)
             else:
                 # show command usage
                 gc.msg('Enter mf [file] to create a new text file named [file].txt')
@@ -169,7 +191,7 @@ def prompt(user):
                             d.delete()
                             gc.success('Deleted directory ' + obj_name)
                             log_entry = user.handle + ' deleted directory ' + obj_name
-                            user.computer.add_log_entry(log_entry)
+                            computer.add_log_entry(log_entry)
                         else:
                             gc.warning('Directory ' + obj_name + ' was not deleted')
                     else:
@@ -226,8 +248,10 @@ def prompt(user):
                     if gc.prompt_yn('Do you want to save your changes to the file?'):
                         f.save()
                         gc.success('File saved successfully.')
-                        log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
-                        user.computer.add_log_entry(log_entry)
+                        if not f.is_log_file():
+                            log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
+                            computer.add_log_entry(log_entry)
+
                     else:
                         gc.warning('File not saved.')
                 else:
@@ -249,17 +273,13 @@ def prompt(user):
         elif base_cmd in ['cp', 'copy']:
             pass
 
-        # downloads a file
-        elif base_cmd in ['dl', 'download']:
-            pass
-
-        # uploads a file
-        elif base_cmd in ['ul', 'upload']:
-            pass
-
         # show disk info
         elif base_cmd == 'disk':
-            user.computer.print_disk_info()
+            computer.print_disk_info()
+
+        # show log file
+        elif base_cmd == 'log':
+            computer.print_log_file()
 
         # show contents of file
         elif base_cmd in ['view', 'cat']:
@@ -307,11 +327,114 @@ def prompt(user):
                 # show command usage
                 gc.msg('Get general info about an object by typing info [object].')
 
+        # attempts SSH login on target
+        elif base_cmd == 'ssh':
+            if len(cmds) > 1:
+                target = cmds[1]
+                gc.msg('Attempting SSH connection to ' + target + '...')
+                if target in ['127.0.0.1', 'localhost']:
+                    gc.warning('You are already connected.')
+                else:
+                    time.sleep(1)
+                    # attempt lookup via IP
+                    c = Computer()
+                    c.ip = target
+                    c.lookup()
+                    if not c.exists:
+                        # attempt lookup via domain
+                        c = Computer()
+                        c.domain = target
+                        c.lookup()
+
+                    if c.exists:
+                        gc.warning('Beginning authorization...')
+                        attempts = 1
+                        correct = False
+                        while attempts <= 3 and not correct:
+                            password = raw_input('  Password: ')
+                            time.sleep(1)
+                            if password == c.password:
+                                gc.success('Connected to ' + target + '.')
+                                correct = True
+                                computer = c
+                                directory = c.root_dir
+                                log_entry = 'new remote session for ' + user.handle + ' [' + user.computer.ip + ']'
+                                computer.add_log_entry(log_entry)
+                            else:
+                                gc.error('Invalid credentials. Attempt ' + str(attempts) + ' of 3.')
+                                computer.add_log_entry('root login failed')
+                            attempts += 1
+                    else:
+                        gc.error('Unable to connect to ' + target + '.')
+
+
+            else:
+                # show command usage
+                gc.msg('Establish a connection to the target by typing [ssh] target.')
+                gc.msg('You will need a valid password to connect.')
+
+        # pings the specified IP or domain
+        elif base_cmd == 'ping':
+            if len(cmds) > 1:
+                # TODO: add regex match for IP/domain
+                target = cmds[1]
+                gc.msg('Pinging ' + target + '...')
+                
+                if target in ['127.0.0.1', 'localhost']:
+                    i = 0
+                    while i < 3:
+                        time.sleep(1)
+                        gc.success('  Reply from ' + target + ' (time < 1 ms)')
+                        i += 1
+                else:
+                    # check for a matching domain or IP
+                    c1 = Computer()
+                    c1.ip = target
+                    c1.lookup()
+                    c2 = Computer()
+                    c2.domain = target
+                    c2.lookup()
+
+                    i = 0
+                    latency = random.randint(10, 100) # simulate ping delay
+                    while i < 3:
+                        time.sleep(1)
+                        i += 1
+                        if c1.exists or c2.exists:
+                            ms = str(latency + random.randint(0, 10)) + ' ms'
+                            reply = '  Reply from ' + target
+                            if c2.exists: # 'resolve' domain if possible
+                                reply += ' [' + c2.ip + ']'
+                            reply += ' (time: ' + ms + ')'
+                            gc.success(reply)
+                            
+                        else:
+                            gc.warning('  Request timed out.')
+
+            else:
+                # show command usage
+                gc.msg('Send an echo request to a target IP or domain by typing ping [target]')
+
+        # downloads a file
+        elif base_cmd in ['dl', 'download']:
+            pass
+
+        # uploads a file
+        elif base_cmd in ['ul', 'upload']:
+            pass
+
+
         # exit the game (TODO: remove this for production)
-        elif base_cmd == 'exit':
-            show_prompt = False
-            # exit script and disconnect from server
-            exit()
+        elif base_cmd in ['exit', 'quit']:
+            if computer == user.computer:
+                gc.msg('Disconnecting from localhost...')
+                show_prompt = False
+                # exit script and disconnect from server
+                exit()
+            else:
+                gc.msg('Disconnecting from ' + computer.ip + '...')
+                computer = user.computer
+                directory = user.get_home_dir()
 
         # command not found
         else:

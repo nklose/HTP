@@ -20,18 +20,21 @@ import random
 from datetime import datetime
 from termcolor import colored
 
+from Database import Database
+
 # constants
+DEBUG_LEVEL = 1                      # verbosity; 0=disabled, 1=important, 2=info
 GAME_VERSION = 0.1                   # current version of HTP
 GAME_TIMESTAMP = '2016-01-23'        # date on which game was last updated
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'    # standard timestamp format
 CMD_LOG_DIR = '../cmd_log'           # directory to store logs of user commands
 NOTE_DIR = '../data/notes'           # directory to store in-game notes
 CMD_LOG_LENGTH = 100                 # number of commands per user to save
+MAX_FILE_SIZE = 4096                 # max characters allowed in a file
 DIR_MAX_LENGTH = 16                  # max chars for a directory name
 DIR_MAX_NEST = 6                     # directory nesting maximum
 DIR_SIZE = 32                        # size on disk one directory takes up
 FILE_MAX_LENGTH = 32                 # max length of a file name
-DEBUG_LEVEL = 2                      # verbosity; 0=disabled, 1=important, 2=info
 BOX_WIDTH = 80                       # width of text box in characters
 LONG_FILE_CUTOFF = 10000             # length at which a file is considered a long file
 
@@ -55,13 +58,25 @@ def gen_password():
 
 # Generate a random IP
 def gen_ip():
-    w, x, y, z = 0, 0, 0, 0
-    while x == 0 and w in (0, 10, 127, 192):
-        w = random.randint(1, 255)
-        x = random.randint(0, 255)
-        y = random.randint(0, 255)
-        z = random.randint(0, 255)
-    return str(w) + '.' + str(x) + '.' + str(y) + '.' + str(z)
+    new_ip = ''
+    db = Database()
+    valid_ip = False
+    while not valid_ip:
+        w, x, y, z = 0, 0, 0, 0
+        while x == 0 and w in (0, 10, 127, 192):
+            w = random.randint(1, 255)
+            x = random.randint(0, 255)
+            y = random.randint(0, 255)
+            z = random.randint(0, 255)
+        new_ip = str(w) + '.' + str(x) + '.' + str(y) + '.' + str(z)
+
+        sql = 'SELECT * FROM computers WHERE ip = %s'
+        args = [new_ip]
+        response = db.get_query(sql, args)
+        if len(response) == 0:
+            valid_ip = True
+    db.close()
+    return new_ip
 
 ## Password Hashing
 # Create a hash string from a password and username

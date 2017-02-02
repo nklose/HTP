@@ -163,3 +163,7 @@ class File:
     def load_note(self, name):
         filepath = os.path.join(gc.NOTE_DIR, name + '.note')
         self.contents_from_file(filepath)
+
+    # returns True only if this file is the OS log file for its computer
+    def is_log_file(self):
+        return self.name == 'log.txt' and self.parent.name == 'os' and self.parent.nesting == 2

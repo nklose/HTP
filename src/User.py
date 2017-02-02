@@ -61,9 +61,9 @@ class User:
             self.handle = result[0][6]
             computer_id = int(result[0][7])
 
-        # get user's computer object
-        self.computer.owner_id = self.id
-        self.computer.lookup()
+            # get user's computer object
+            self.computer.owner_id = self.id
+            self.computer.lookup()
 
         db.close()
 
@@ -249,14 +249,7 @@ class User:
         gc.hr()
 
         # generate an IP address for the user
-        valid_ip = False
-        while not valid_ip:
-            self.computer.ip = gc.gen_ip()
-            # check if the IP has been assigned already
-            sql = 'SELECT * FROM computers WHERE ip = %s;'
-            response = db.get_query(sql, [self.computer.ip])
-            if len(response) == 0:
-                valid_ip = True
+        self.computer.ip = gc.gen_ip()
 
         self.save()     # write user to database
         self.lookup()   # get generated id for the user
