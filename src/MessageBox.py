@@ -29,6 +29,7 @@ class MessageBox:
         self.border_color = 'green'
         self.label_color = 'cyan'
         self.text_color = 'white'
+        self.heading_color = 'green'
         self.text = []              # raw text as a list of lines
         self.label_width = 16
 
@@ -36,9 +37,23 @@ class MessageBox:
     def set_title(self, title):
         self.title = title
 
-    # Adds a label for a section
-    def add_label(self, label):
-        pass
+    # Adds a heading label for a section
+    def add_heading(self, heading):
+        heading += ':'
+        text = colored(u'\u2502', self.border_color)
+        text += colored(heading, self.heading_color)
+        text += self.get_spaces(heading)
+        text += colored(u'\u2502', self.border_color)
+        self.text.append(text)
+
+    # returns a string of spaces to pad the end of the given string
+    def get_spaces(self, str):
+        spaces = ''
+        i = self.width - len(str) - 2
+        while i > 0:
+            spaces += ' '
+            i -= 1
+        return spaces
 
     # Adds a property with a name and value to the section
     def add_property(self, name, value):

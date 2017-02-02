@@ -41,7 +41,7 @@ class Computer:
         self.ip = '0.0.0.0'
         self.password = ''
         self.bank_id = None
-        self.domain_name = None
+        self.domain = None
         self.id = -1
         self.last_login = gc.current_time()
         self.folder_count = 0
@@ -58,6 +58,10 @@ class Computer:
         if self.ip != '0.0.0.0':
             sql = 'SELECT * FROM computers WHERE ip = %s'
             args = [self.ip]
+        # search by domain
+        elif self.domain != None:
+            sql = 'SELECT * FROM computers WHERE domain_name = %s'
+            args = [self.domain]
         # search by ID
         elif self.id != -1:
             sql = 'SELECT * FROM computers WHERE id = %s'
@@ -72,7 +76,7 @@ class Computer:
             self.id = int(result[0][0])
             self.ip = result[0][1]
             self.password = result[0][2]
-            self.domain_name = result[0][3]
+            self.domain = result[0][3]
             self.owner_id = int(result[0][4])
             self.last_login = gc.ts_to_string(result[0][5])
             if result[0][6] != None:
@@ -108,7 +112,7 @@ class Computer:
             sql = 'INSERT INTO computers (ip, password, domain_name, owner_id, last_login, bank_id, '
             sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, cr_level) VALUES '
             sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-            args = [self.ip, self.password, self.domain_name, self.owner_id,
+            args = [self.ip, self.password, self.domain, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
                 self.fw_level, self.av_level, self.cr_level]
             self.exists = True
@@ -123,7 +127,7 @@ class Computer:
             sql = 'UPDATE computers SET password = %s, owner_id = %s, last_login = %s, '
             sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, fw_level = %s, '
             sql += 'av_level = %s, cr_level = %s WHERE ip = %s'
-            args = [self.password, self.domain_name, self.owner_id,
+            args = [self.password, self.domain, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
                 self.fw_level, self.av_level, self.cr_level, self.ip]
             db.post_query(sql, args)
@@ -174,6 +178,21 @@ class Computer:
         mb.add_property('Free Space (B)', gc.hr_large(self.disk_free) + ' B')
         mb.display()
 
+    # shows all of a computer's disk contents
+    def print_all_contents(self):
+        self.root_dir.print_all_contents()
+
+
+    # prints the log file for this computer
+    def print_log_file(self):
+        print ('Root Dir Exists: ' + str(self.root_dir.exists))
+        osdir = Directory('os', self.root_dir.id)
+        print ('OS Dir Exists: ' + str(osdir.exists))
+        osdir.lookup()
+        logfile = File('log.txt', osdir)
+        logfile.lookup()
+        logfile.print_contents()
+
     # adds an entry to the log, and creates it if it doesn't already exist
     def add_log_entry(self, text):
         db = Database()
@@ -212,12 +231,18 @@ class Computer:
         sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
         args = ['log.txt', sys_dir_id]
         log_id = int(db.get_query(sql, args)[0][0])
+        log_content = db.get_query(sql, args)[0][3]
 
         # finally, add text to the logfile
-        sql = 'UPDATE files SET content = CONCAT(content, %s), modified_time = now() WHERE id = %s'
         log_entry = '[' + gc.current_time() + '] ' + text + '\n'
-        args = [log_entry, log_id]
+        new_content = log_content + log_entry
+        while len(new_content) > gc.MAX_FILE_SIZE: # remove lines top as needed
+            nl_index = new_content.index('\n') + 1 # find first newline character
+            new_content = new_content[nl_index:]   # remove text up to first newline
+        sql = 'UPDATE files SET content = %s, modified_time = now() WHERE id = %s'
+        args = [new_content, log_id]
         db.post_query(sql, args)
+
 
         db.close()
 

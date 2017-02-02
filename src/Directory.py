@@ -28,6 +28,7 @@ class Directory:
         self.files = []
         self.subdirs = []
         self.id = id
+        self.comp_id = -1
         self.exists = False
         self.fullpath = '~'
         self.nesting = 0
@@ -162,12 +163,12 @@ class Directory:
         file_list = ''
         for file in self.files:
             if file.type == 'bin':
-                file_list += colored(file.name, 'green')
+                file_list += colored(file.name, 'green') + ' '
             else:
                 file_list += file.name + ' '
         return file_list
 
-    # prints contents to screen
+    # prints list of files and subdirectories to screen
     def print_contents(self):
         self.lookup()
         dir_list = self.get_subdirs()
@@ -175,6 +176,22 @@ class Directory:
 
         gc.msg_pair('Directories: ', colored(dir_list, 'yellow'))
         gc.msg_pair('Files:       ', file_list)
+
+    # prints the entire file structure in this directory
+    def print_all_contents(self):
+        indents = '|'
+        spaces = ''
+        i = 1
+        while i < self.nesting:
+            indents += '-'
+            spaces += ' '
+            i += 1
+
+        gc.msg(indents + '[' + self.name + ']')
+        gc.msg('|' + spaces + ' D: ' + colored(self.get_subdirs(), 'yellow'))
+        gc.msg('|' + spaces + ' F: ' + colored(self.get_files(), 'white'))
+        for subdir in self.subdirs:
+            subdir.print_all_contents()
 
     # permanently delete this directory and its contents
     def delete(self):
