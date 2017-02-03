@@ -17,6 +17,7 @@ import re
 import time
 import atexit
 import random
+import datetime
 import readline
 import subprocess
 
@@ -423,6 +424,43 @@ def prompt(user):
         elif base_cmd in ['ul', 'upload']:
             pass
 
+        # change a property for a user's account
+        elif base_cmd == 'set':
+            if len(cmds) > 1:
+                pass
+            else:
+                # show command usage
+                gc.msg('This can be used to change settings for your account.')
+                gc.msg('Valid settings: email, handle')
+
+        # validate an email address with a given token
+        elif base_cmd == 'verify':
+            if len(cmds) > 1:
+                if user.email_confirmed:
+                    gc.warning('Your email address has already been confirmed.')
+                    gc.msg('If you want to change your email, type \'set email\'.')
+                elif cmds[1] == 'resend':
+                    user.confirm_email()
+                elif cmds[1] == user.token:
+                    user.lookup()
+                    # check if the token is still valid
+                    if user.token_date > gc.string_to_ts(gc.current_time()) - datetime.timedelta(days = 1):
+                        user.token = ''
+                        user.email_confirmed = True
+                        user.save()
+                        gc.success('Thanks, your email address has been confirmed.')
+                    else:
+                        gc.error('Sorry, that token has expired.')
+                        gc.msg('To resend the verification email, type \'verify resend\'.')
+                else:
+                    gc.error('Sorry, the token you entered is invalid.')
+                    gc.msg('If you want to resend the verification email, type \'verify resend\'.')
+                    gc.msg('To change the email linked to your account, type \'set email\'.')
+            else:
+                # show command usage
+                gc.msg('This command is used to verify an email address with a given token.')
+                gc.msg('If you want to resend the verification email, type \'verify resend\'.')
+                gc.msg('To change the email linked to your account, type \'set email\'.')
 
         # exit the game (TODO: remove this for production)
         elif base_cmd in ['exit', 'quit']:

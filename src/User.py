@@ -14,8 +14,11 @@
 # In the game, a User is known by their handle (which can be changed).
 # Usernames, emails, and passwords are only used for registration and login.
 
+import os
 import re
 import time
+import smtplib
+import yagmail
 
 import GameController as gc
 
@@ -32,6 +35,7 @@ class User:
     def __init__(self, username = '', email = '', password = '', handle = ''):
         self.name = username
         self.email = email
+        self.email_confirmed = False
         self.password = password
         self.handle = handle
         self.exists = False
@@ -39,6 +43,8 @@ class User:
         self.creation_date = gc.current_time()
         self.computer = Computer()
         self.id = -1
+        self.token = ''
+        self.token_date = None
 
     # gets information from database for a specific username if it exists
     def lookup(self):
@@ -55,11 +61,15 @@ class User:
             self.exists = True
             self.id = int(result[0][0])
             self.email = result[0][2]
-            self.last_login = gc.ts_to_string(result[0][3])
-            self.creation_date = gc.ts_to_string(result[0][4])
-            self.password = result[0][5]
-            self.handle = result[0][6]
-            computer_id = int(result[0][7])
+            email_confirmed = int(result[0][3])
+            self.email_confirmed = email_confirmed == 1
+            self.last_login = gc.ts_to_string(result[0][4])
+            self.creation_date = gc.ts_to_string(result[0][5])
+            self.password = result[0][6]
+            self.handle = result[0][7]
+            computer_id = int(result[0][8])
+            self.token = result[0][9]
+            self.token_date = result[0][10]
 
             # get user's computer object
             self.computer.owner_id = self.id
@@ -72,18 +82,19 @@ class User:
         db = Database()
 
         if not self.exists:
-            sql = 'INSERT INTO users (username, email, last_login, creation_date, '
-            sql += 'password, handle, computer_id) VALUES '
-            sql += '(%s, %s, %s, %s, %s, %s, %s)'
-            args = [self.name, self.email, self.last_login, self.creation_date,
-                self.password, self.handle, self.computer.id]
+            sql = 'INSERT INTO users (username, email, email_confirmed, last_login, creation_date, '
+            sql += 'password, handle, computer_id, token, token_date) VALUES '
+            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            args = [self.name, self.email, self.email_confirmed, self.last_login, self.creation_date,
+                self.password, self.handle, self.computer.id, self.token, self.token_date]
             self.exists = True
         else:
-            sql = 'UPDATE users SET email = %s, last_login = %s, '
-            sql += 'creation_date = %s, password = %s, handle = %s, computer_id = %s '
-            sql += 'WHERE username = %s'
-            args = [self.email, self.last_login, self.creation_date,
-                self.password, self.handle, self.computer.id, self.name]
+            sql = 'UPDATE users SET email = %s, email_confirmed = %s, last_login = %s, '
+            sql += 'creation_date = %s, password = %s, handle = %s, computer_id = %s, '
+            sql += 'token = %s, token_date = %s WHERE username = %s'
+            args = [self.email, self.email_confirmed, self.last_login, self.creation_date,
+                self.password, self.handle, self.computer.id, self.token, 
+                self.token_date, self.name]
         db.post_query(sql, args)
         db.close()
 
@@ -208,19 +219,23 @@ class User:
 
         gc.hr()
 
-        # get a valid email address
-        valid_email = False
-        gc.msg('You will need to enter a valid email in case you forget your password.')
-        while not valid_email:
+        # get a valid email address (optional for users)
+        email_set = False
+        gc.msg('You may optionally enter an email address which will enable password resets.')
+        gc.msg('If you leave this blank, you will not be able to recover your account if you forget your password.')
+        while not email_set:
             self.email = raw_input('Email Address: ')
-            if re.match(r'[^@]+@[^@]+\.[^@]+', self.email):
+            if self.email == '':
+                gc.warning('You have opted not to attach an email address to your account.')
+                email_set = True
+            elif re.match(r'[^@]+@[^@]+\.[^@]+', self.email):
                 # check if email exists in database
                 sql = 'SELECT * FROM users WHERE email = %s;'
                 response = db.get_query(sql, [self.email])
                 if len(response) > 0:
                     gc.error('Sorry, that email has already been registered.')
                 else:
-                    valid_email = True
+                    email_set = True
             else:
                 gc.error('Sorry, your input was not in the right format for an email address.')
 
@@ -248,6 +263,9 @@ class User:
 
         gc.hr()
 
+        # send a confirmation email to the user if necessary
+        self.confirm_email()
+
         # generate an IP address for the user
         self.computer.ip = gc.gen_ip()
 
@@ -266,10 +284,40 @@ class User:
         # generate default directories and files
         self.computer.add_default_files()
 
-        gc.success('\n Account ' + self.name + ' created!')
+        gc.success('Account ' + self.name + ' created!')
 
         # close database
         db.close()
+
+    # sends a confirmation email to validate the user's email address
+    def confirm_email(self):
+        if self.email != '':
+            try:
+                emailuser = os.environ['emailuser']
+                emailpass = os.environ['emailpass']
+                yag = yagmail.SMTP(emailuser, emailpass)
+                self.token = gc.gen_token()
+                self.token_date = gc.current_time()
+                subject = 'HTP Email Confirmation'
+                msg = 'Greetings!\n\n'
+                msg += 'Your email address has been listed for an account on HTP with username '
+                msg += '<b>' + self.name + '</b>.\n\n'
+                msg += '<b>If you didn\'t request this:</b>'
+                msg += '<ul><li>Disregard this email.</li>'
+                msg += '<li>If you keep getting these messages, please reply and tell us.</li></ul>'
+                msg += '<b>If you are confirming your email address:</b>\n'
+                msg += '<ul><li>Log into the game</li>'
+                msg += '<li>Enter the command <b>verify ' + self.token + '</b></li></ul>'
+                msg += '<b>If you have forgotten your password:</b>'
+                msg += '<ul><li>Start the game client</li>'
+                msg += '<li>Choose the \'Reset Password\' option</li>'
+                msg += '<li>Enter your username (<b>' + self.name + '</b>)</li>'
+                msg += '<li>Enter the token <b>' + self.token + '</b></li></ul>'
+                msg += 'Sincerely,\nHTP Staff'
+                yag.send(self.email, subject, msg)
+                gc.success('Confirmation email sent.')
+            except KeyError as e:
+                gc.error('A problem occurred while sending the confirmation email.')
 
     # update last login time on user login
     def new_login(self):

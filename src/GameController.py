@@ -13,13 +13,16 @@
 # Collection of general utility functions for the game.
 
 import os
+import sys
 import time
 import hashlib
 import random
 
-from datetime import datetime
+from getpass import getpass
+from datetime import datetime, timedelta
 from termcolor import colored
 
+from User import User
 from Database import Database
 
 # constants
@@ -37,6 +40,7 @@ DIR_SIZE = 32                        # size on disk one directory takes up
 FILE_MAX_LENGTH = 32                 # max length of a file name
 BOX_WIDTH = 80                       # width of text box in characters
 LONG_FILE_CUTOFF = 10000             # length at which a file is considered a long file
+CONTACT_EMAIL = 'spartandominion@gmail.com'
 
 # gets the current timestamp
 def current_time():
@@ -55,6 +59,21 @@ def ts_to_string(ts):
 def gen_password():
     length = random.randint(8, 12)
     return ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(length))
+
+# Generate a random unique token
+def gen_token():
+    token = ''
+    unique = False
+    db = Database()
+    while not unique:
+        token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(12))
+        sql = 'SELECT * FROM users WHERE token = %s'
+        args = [token]
+        response = db.get_query(sql, args)
+        if len(response) == 0:
+            unique = True
+    db.close()
+    return token
 
 # Generate a random IP
 def gen_ip():
@@ -188,3 +207,54 @@ def hr():
         line += u'\u2500'
         i += 1
     print line
+
+# attempts a password reset on an account
+def reset_password():
+    db = Database()
+    msg('Beginning the password reset process...')
+    username = raw_input('  Please enter your username: ')
+    user = User()
+    user.name = username
+    user.lookup()
+    # check if the user is registered
+    if user.exists:
+        # check if they already have a reset token
+        if user.email == '':
+            error('Sorry, you are not eligible to use the password reset feature.')
+            warning('Only accounts with a valid email address attached can use this feature.')
+            msg('Please contact our staff at ' + CONTACT_EMAIL + ' for further assistance.')
+        elif user.token == '':
+            # generate a token and send it to the user
+            user.confirm_email()
+            user.save()
+            msg('Please check your email for a validation code, then use the \'Reset Password\' feature again.')
+        elif user.token_date < string_to_ts(current_time()) - timedelta(days = 1):
+            warning('Your reset token has expired. Sending another one...')
+            user.confirm_email()
+            user.save()
+        else:
+            token = raw_input('  Please enter your reset token: ')
+            if token == user.token:
+                msg('You can now set a password for your account.')
+                valid_password = False
+                while not valid_password:
+                    password = getpass()
+                    if len(password) < 6:
+                        error('Your password must contain 6 or more characters.')
+                    else:
+                        confirm = getpass('Confirm: ')
+                        if password != confirm:
+                            error('Sorry, those passwords didn\'t match.')
+                        else:
+                            valid_password = True
+                            user.password = hash_password(password, user.name)
+                user.token = ''
+                user.save()
+            else:
+                warning('Sorry, that token is not valid. Sending another one...')
+                user.confirm_email()
+                user.save()
+
+    else:
+        error('Sorry, that username is not registered.')
+    db.close()
