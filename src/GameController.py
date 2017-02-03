@@ -131,6 +131,14 @@ def debug(message, level = 2):
             label = colored('  [INFO] ', 'yellow')
         print(label + colored(message, 'white'))
 
+# Typewriter-like animation
+def typewriter(message):
+    for c in message:
+        sys.stdout.write(c)
+        sys.stdout.flush()
+        time.sleep(random.uniform(0, 0.2))
+    sys.stdout.write('\n')
+
 # Clear screen
 def clear():
     os.system('clear')
