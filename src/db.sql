@@ -3,11 +3,14 @@ CREATE TABLE IF NOT EXISTS users
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
     username VARCHAR(16) NOT NULL UNIQUE,
     email VARCHAR(254) NOT NULL UNIQUE,
+    email_confirmed TINYINT(1) NOT NULL DEFAULT 0, -- whether or not the email address has been confirmed
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     password CHAR(81), -- 64 for SHA-256 plus 16 for salt
     handle VARCHAR(16) NOT NULL UNIQUE, -- user's chosen in-game alias; can be changed
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
+    token VARCHAR(12) NOT NULL DEFAULT '', -- token for email confirmation and password resets
+    token_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP -- date on which the token was created
     PRIMARY KEY(id)
 );
 
@@ -27,6 +30,7 @@ CREATE TABLE IF NOT EXISTS computers
     fw_level INT(3) DEFAULT 1,  -- strength of best firewall on system
     av_level INT(3) DEFAULT 1,  -- strength of best antivirus software
     cr_level INT(3) DEFAULT 1,  -- strength of best password cracker
+    online TINYINT(1) DEFAULT 1, -- whether or not the computer can be contacted
     PRIMARY KEY(id)
 );
 
@@ -38,6 +42,7 @@ CREATE TABLE IF NOT EXISTS directories
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_only TINYINT(1) DEFAULT 0
     PRIMARY KEY(id)
 );
 
@@ -52,7 +57,8 @@ CREATE TABLE IF NOT EXISTS files
     file_size INT(12) NOT NULL, -- size in bytes
     creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    category VARCHAR(32) DEFAULT NULL, -- e.g. 'firewall', 'cracker'
+    category VARCHAR(32) DEFAULT NULL, -- e.g. 'fw', 'cr'
+    comment VARCHAR(64) DEFAULT '', -- description for .bin files
     PRIMARY KEY(id)
 );
 

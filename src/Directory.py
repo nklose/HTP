@@ -147,10 +147,6 @@ class Directory:
     def get_size(self):
         pass
 
-    # adds a file to the directory
-    def add_file(self, file):
-        pass
-
     # returns subdirectories in this directory
     def get_subdirs(self):
         subdir_list = ''
