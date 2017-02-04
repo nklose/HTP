@@ -133,7 +133,7 @@ class File:
         if self.category != '':
             mb.add_property('Category', self.category)
         if self.memory != 0:
-            mb.add_property('Memory Req.', self.memory)
+            mb.add_property('Memory Req.', str(self.memory) + ' MB')
         mb.add_long_text('COMMENT: ' + self.comment)
         mb.display()
 
