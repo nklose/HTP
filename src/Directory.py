@@ -35,6 +35,7 @@ class Directory:
         self.size = 0
         self.creation_time = gc.current_time()
         self.modified_time = self.creation_time
+        self.read_only = False
 
     # gets information from database about this directory if it exists
     def lookup(self):
@@ -126,15 +127,15 @@ class Directory:
     def save(self):
         db = Database()
         if not self.exists:
-            sql = 'INSERT INTO directories (dir_name, parent_id, computer_id, modified_time) '
-            sql += 'VALUES (%s, %s, %s, %s)'
-            args = [self.name, self.parent_id, self.comp_id, self.modified_time]
+            sql = 'INSERT INTO directories (dir_name, parent_id, computer_id, modified_time, read_only) '
+            sql += 'VALUES (%s, %s, %s, %s, %s)'
+            args = [self.name, self.parent_id, self.comp_id, self.modified_time, self.read_only]
             db.post_query(sql, args)
             self.exists = True
         else:
             sql = 'UPDATE directories SET dir_name = %s, parent_id = %s, computer_id = %s, '
-            sql += 'modified_time = %s WHERE id = %s'
-            args = [self.name, self.parent_id, self.comp_id, self.id, self.modified_time]
+            sql += 'modified_time = %s, read_only = %s WHERE id = %s'
+            args = [self.name, self.parent_id, self.comp_id, self.id, self.modified_time, self.read_only]
             db.post_query(sql, args)
 
         db.close()
@@ -175,17 +176,17 @@ class Directory:
 
     # prints the entire file structure in this directory
     def print_all_contents(self):
-        indents = '|'
+        indents = u'\u251c'
         spaces = ''
         i = 1
         while i < self.nesting:
-            indents += '-'
+            indents += u'\u2500'
             spaces += ' '
             i += 1
 
         gc.msg(indents + '[' + self.name + ']')
-        gc.msg('|' + spaces + ' D: ' + colored(self.get_subdirs(), 'yellow'))
-        gc.msg('|' + spaces + ' F: ' + colored(self.get_files(), 'white'))
+        gc.msg(u'\u2502' + spaces + ' D: ' + colored(self.get_subdirs(), 'yellow'))
+        gc.msg(u'\u2502' + spaces + ' F: ' + colored(self.get_files(), 'white'))
         for subdir in self.subdirs:
             subdir.print_all_contents()
 
@@ -221,5 +222,5 @@ class Directory:
         mb.add_property('Subdirectories', self.get_subdirs())
         mb.add_property('Created On', self.creation_time)
         mb.add_property('Modified On', self.modified_time)
-
+        mb.add_property('Read Only', str(self.read_only))
         mb.display()

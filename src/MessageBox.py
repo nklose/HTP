@@ -22,8 +22,8 @@ from termcolor import colored
 # Message boxes can be used to display info tables in an aesthetic way.
 class MessageBox:
 
-    def __init__(self):
-        self.title = 'Untitled'     # appears at top
+    def __init__(self, title = 'Untitled'):
+        self.title = title          # appears at top
         self.width = gc.BOX_WIDTH   # horizontal size in chars
         self.title_color = 'yellow'
         self.border_color = 'green'
@@ -88,62 +88,25 @@ class MessageBox:
         wrapper = textwrap.TextWrapper()
         wrapper.width = self.width - 4
         for line in wrapper.wrap(text):
-            # get filler spaces
-            spaces = ''
-            i = self.width - len(line) - 4
-            while i > 0:
-                spaces += ' '
-                i -= 1
+            if len(line) == 0:
+                self.blank_line()
+            else:
+                # get filler spaces
+                spaces = ''
+                i = self.width - len(line) - 4
+                while i > 0:
+                    spaces += ' '
+                    i -= 1
 
-            # add the line
-            bordered_line = colored(u'\u2502 ', self.border_color)
-            bordered_line += colored(line + spaces, self.text_color)
-            bordered_line += colored(u' \u2502', self.border_color)
-            self.text.append(bordered_line)
+                # add the line
+                bordered_line = colored(u'\u2502 ', self.border_color)
+                bordered_line += colored(line + spaces, self.text_color)
+                bordered_line += colored(u' \u2502', self.border_color)
+                self.text.append(bordered_line)
 
     # adds a text file to the box
     def add_file(self, text):
-        max_line_width = self.width - 2
-        file = colored(u'\u2502', self.border_color)
-        i = 0
-        line_width = 0
-
-        # strip EOF newline
-        if text[len(text) - 1] == '\n':
-            text = text[:-1]
-
-        while i < len(text):
-            # check for newline character
-            if text[i] == '\n':
-                # pad spaces
-                while line_width < max_line_width:
-                    file += ' '
-                    line_width += 1
-                # end line
-                file += colored(u'\u2502' + '\n' + u'\u2502', self.border_color)
-                line_width = 0
-                i += 1
-            # check for line overflow
-            elif line_width >= max_line_width:
-                file += colored(u'\u2502' + '\n' + u'\u2502', self.border_color)
-                file += colored(u'\u00bb' + ' ', 'red')
-                line_width = 2
-            # add character to output
-            else:
-                file += text[i]
-                line_width += 1
-                i += 1
-
-            # check for EOF
-            if i == len(text):
-                # pad spaces
-                while line_width < max_line_width:
-                    file += ' '
-                    line_width += 1
-                # end file
-                file += colored(u'\u2502', self.border_color)
-
-        self.text.append(file)
+        pass
 
     # Adds a blank line to the box
     def blank_line(self):

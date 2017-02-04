@@ -277,6 +277,8 @@ def prompt(user):
         # show disk info
         elif base_cmd == 'disk':
             computer.print_disk_info()
+            if gc.prompt_yn('List all disk contents?'):
+                computer.print_all_contents()
 
         # show log file
         elif base_cmd == 'log':

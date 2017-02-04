@@ -33,7 +33,7 @@ class File:
         self.id = -1
         self.creation_time = gc.current_time()
         self.modified_time = self.creation_time
-
+        self.category = ''
 
         if type == 'txt':
             self.size = len(content)
@@ -134,7 +134,8 @@ class File:
             # construct message box
             mb = MessageBox()
             mb.title = self.name + ' [' + str(self.size) + ' bytes]'
-            mb.add_file(self.content)
+            for line in self.content.split('\n'):
+                mb.add_long_text(line)
 
             # check for long file
             if self.size > gc.LONG_FILE_CUTOFF:
@@ -158,6 +159,29 @@ class File:
             text += line
 
         self.content = text
+        self.size = len(self.content) + len(self.name)
+
+    # creates a binary file based on a textual description from a real file on disk
+    def program_from_file(self, filepath):
+        self.name = os.path.basename(filepath)
+        self.type = 'bin'
+
+        text = ''
+        f = open(filepath, 'r')
+        lines = f.readlines()
+        for line in lines:
+            text = line.split()
+            if len(text) > 0:
+                if text[0] == 'LEVEL':
+                    self.level = int(text[1])
+                elif text[0] == 'SIZE':
+                    self.size = int(text[1])
+                elif text[0] == 'CATEGORY':
+                    self.category = text[1]
+                elif text[0] == 'COMMENT':
+                    self.comment = line[8:]
+                else:
+                    gc.warning('Program ' + self.name + ' has a formatting issue.')
 
     # loads a specific note file
     def load_note(self, name):
@@ -167,3 +191,4 @@ class File:
     # returns True only if this file is the OS log file for its computer
     def is_log_file(self):
         return self.name == 'log.txt' and self.parent.name == 'os' and self.parent.nesting == 2
+
