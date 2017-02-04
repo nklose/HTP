@@ -35,9 +35,8 @@ class Computer:
         self.cpu = 512
         self.hdd = 1
         self.disk_free = self.hdd * 1024 ** 3
-        self.fw_level = 1
-        self.av_level = 1
-        self.cr_level = 1
+        self.fw_level = 0
+        self.av_level = 0
         self.ip = '0.0.0.0'
         self.password = ''
         self.bank_id = None
@@ -90,8 +89,7 @@ class Computer:
             self.disk_free = int(result[0][10])
             self.fw_level = int(result[0][11])
             self.av_level = int(result[0][12])
-            self.cr_level = int(result[0][13])
-            self.online = bool(result[0][14])
+            self.online = bool(result[0][13])
             self.check_space()
 
             # get root folder ID
@@ -112,11 +110,11 @@ class Computer:
         if not self.exists:
             # create the computer
             sql = 'INSERT INTO computers (ip, password, domain_name, owner_id, last_login, bank_id, '
-            sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, cr_level, online) VALUES '
-            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, online) VALUES '
+            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             args = [self.ip, self.password, self.domain, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
-                self.fw_level, self.av_level, self.cr_level, self.online]
+                self.fw_level, self.av_level, self.online]
             self.exists = True
             db.post_query(sql, args)
             self.lookup()
@@ -128,10 +126,10 @@ class Computer:
         else:
             sql = 'UPDATE computers SET password = %s, owner_id = %s, last_login = %s, '
             sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, fw_level = %s, '
-            sql += 'av_level = %s, cr_level = %s, online = %s WHERE ip = %s'
+            sql += 'av_level = %s, online = %s WHERE ip = %s'
             args = [self.password, self.domain, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
-                self.fw_level, self.av_level, self.cr_level, self.online, self.ip]
+                self.fw_level, self.av_level, self.online, self.ip]
             db.post_query(sql, args)
         db.close()
 

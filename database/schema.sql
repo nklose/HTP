@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users
     handle VARCHAR(16) NOT NULL UNIQUE, -- user's chosen in-game alias; can be changed
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     token VARCHAR(12) NOT NULL DEFAULT '', -- token for email confirmation and password resets
-    token_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP -- date on which the token was created
+    token_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- date on which the token was created
     PRIMARY KEY(id)
 );
 
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS directories
     computer_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id),
     creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    read_only TINYINT(1) DEFAULT 0
+    read_only TINYINT(1) DEFAULT 0,
     PRIMARY KEY(id)
 );
 
