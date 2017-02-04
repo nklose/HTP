@@ -10,7 +10,7 @@
 #################################################
 
 # File: Computer.py
-# A Computer represents a virtual workstation (if owned by a User) 
+# A Computer represents a virtual workstation (if owned by a User)
 # or a virtual server (if owned by the game itself).
 # Some Computers may be running their own web or bank servers.
 # Each Computer has at least:
@@ -48,6 +48,7 @@ class Computer:
         self.file_count = 0
         self.root_dir = Directory()    # root directory for this computer (i.e. '~')
         self.exists = False
+        self.online = True
 
     # gets information from database for a specific computer IP if it exists
     def lookup(self):
@@ -90,6 +91,7 @@ class Computer:
             self.fw_level = int(result[0][11])
             self.av_level = int(result[0][12])
             self.cr_level = int(result[0][13])
+            self.online = bool(result[0][14])
             self.check_space()
 
             # get root folder ID
@@ -110,11 +112,11 @@ class Computer:
         if not self.exists:
             # create the computer
             sql = 'INSERT INTO computers (ip, password, domain_name, owner_id, last_login, bank_id, '
-            sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, cr_level) VALUES '
-            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, cr_level, online) VALUES '
+            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             args = [self.ip, self.password, self.domain, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
-                self.fw_level, self.av_level, self.cr_level]
+                self.fw_level, self.av_level, self.cr_level, self.online]
             self.exists = True
             db.post_query(sql, args)
             self.lookup()
@@ -126,10 +128,10 @@ class Computer:
         else:
             sql = 'UPDATE computers SET password = %s, owner_id = %s, last_login = %s, '
             sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, fw_level = %s, '
-            sql += 'av_level = %s, cr_level = %s WHERE ip = %s'
+            sql += 'av_level = %s, cr_level = %s, online = %s WHERE ip = %s'
             args = [self.password, self.domain, self.owner_id,
                 self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
-                self.fw_level, self.av_level, self.cr_level, self.ip]
+                self.fw_level, self.av_level, self.cr_level, self.online, self.ip]
             db.post_query(sql, args)
         db.close()
 
@@ -252,7 +254,7 @@ class Computer:
         if self.root_dir.exists:
             # add initial note
             note = File('note.txt', self.root_dir)
-            note.load_note('first-note')
+            note.load_note('note1')
             note.save()
 
             # add basic firewall
@@ -267,4 +269,3 @@ class Computer:
         else:
             gc.error('An error occurred while creating the default files.')
 
-        
