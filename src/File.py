@@ -185,7 +185,7 @@ class File:
 
     # loads a specific note file
     def load_note(self, name):
-        filepath = os.path.join(gc.NOTE_DIR, name + '.note')
+        filepath = os.path.join(gc.NOTE_DIR, name + '.txt')
         self.contents_from_file(filepath)
 
     # returns True only if this file is the OS log file for its computer

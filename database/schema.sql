@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS computers
     disk_free INT(12) DEFAULT 0, -- total free disk space in bytes
     fw_level INT(3) DEFAULT 0,  -- strength of best firewall on system
     av_level INT(3) DEFAULT 0,  -- strength of best antivirus software
-    cr_level INT(3) DEFAULT 0,  -- strength of best password cracker
     online TINYINT(1) DEFAULT 1, -- whether or not the computer can be contacted
     PRIMARY KEY(id)
 );
@@ -59,6 +58,7 @@ CREATE TABLE IF NOT EXISTS files
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     category VARCHAR(32) DEFAULT NULL, -- e.g. 'fw', 'cr'
     comment VARCHAR(64) DEFAULT '', -- description for .bin files
+    memory INT(8) DEFAULT 0, -- memory usage for .bin files in MB
     PRIMARY KEY(id)
 );
 
