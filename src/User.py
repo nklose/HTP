@@ -93,7 +93,7 @@ class User:
             sql += 'creation_date = %s, password = %s, handle = %s, computer_id = %s, '
             sql += 'token = %s, token_date = %s WHERE username = %s'
             args = [self.email, self.email_confirmed, self.last_login, self.creation_date,
-                self.password, self.handle, self.computer.id, self.token, 
+                self.password, self.handle, self.computer.id, self.token,
                 self.token_date, self.name]
         db.post_query(sql, args)
         db.close()
@@ -127,7 +127,6 @@ class User:
         msg_box.add_property('Free', gc.hr_bytes(c.disk_free))
         msg_box.add_property('Firewall', 'Level ' + str(c.fw_level))
         msg_box.add_property('Antivirus', 'Level ' + str(c.av_level))
-        msg_box.add_property('Cracker', 'Level ' + str(c.cr_level))
         msg_box.hr()
         msg_box.add_property('IP Address', c.ip)
         msg_box.add_property('Root Password', str(c.password))
@@ -177,7 +176,7 @@ class User:
         valid_user = False
         db = Database()
         gc.hr()
-        
+
         while not valid_user:
             self.name = raw_input('Desired Username: ')
 

@@ -34,6 +34,8 @@ class File:
         self.creation_time = gc.current_time()
         self.modified_time = self.creation_time
         self.category = ''
+        self.comment = 0
+        self.memory = 0
 
         if type == 'txt':
             self.size = len(content)
@@ -59,12 +61,14 @@ class File:
             self.content = result[0][3]
             self.type = result[0][4]
             self.level = int(result[0][5])
+            self.size = int(result[0][6])
             self.creation_time = gc.ts_to_string(result[0][7])
             self.modified_time = gc.ts_to_string(result[0][8])
+            self.category = result[0][9]
+            self.comment = result[0][10]
+            self.memory = (result[0][11])
             if self.type == 'txt':
                 self.size = len(self.name) + len(self.content)
-            else:
-                self.size = int(result[0][6])
 
         db.close()
 
@@ -126,6 +130,11 @@ class File:
         mb.add_property('Level', str(self.level))
         mb.add_property('Created On', self.creation_time)
         mb.add_property('Modified On', self.modified_time)
+        if self.category != '':
+            mb.add_property('Category', self.category)
+        if self.memory != 0:
+            mb.add_property('Memory Req.', self.memory)
+        mb.add_long_text('COMMENT: ' + self.comment)
         mb.display()
 
     # prints the contents of a file
