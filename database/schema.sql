@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS files
     creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     category VARCHAR(32) DEFAULT NULL, -- e.g. 'fw', 'cr'
-    comment VARCHAR(64)  NOT NULL DEFAULT '', -- description for .bin files
+    comment VARCHAR(128)  NOT NULL DEFAULT '', -- description for .bin files
     memory INT(8) DEFAULT 0, -- memory usage for .bin files in MB
     PRIMARY KEY(id)
 );
