@@ -27,8 +27,6 @@ CREATE TABLE IF NOT EXISTS computers
     cpu INT(8) DEFAULT 512, -- total CPU speed in MHz
     hdd INT(8) DEFAULT 1, -- total hard drive space in GB (smallest drive is 1 GB)
     disk_free INT(12) DEFAULT 0, -- total free disk space in bytes
-    fw_level INT(3) DEFAULT 0,  -- strength of best firewall on system
-    av_level INT(3) DEFAULT 0,  -- strength of best antivirus software
     online TINYINT(1) DEFAULT 1, -- whether or not the computer can be contacted
     PRIMARY KEY(id)
 );
@@ -91,5 +89,17 @@ CREATE TABLE IF NOT EXISTS emails
     subject VARCHAR(256),
     server_id INT(12) NOT NULL REFERENCES computers(id),
     recipient_email VARCHAR(254) NOT NULL REFERENCES users(email),
-    sender_email VARCHAR(254) NOT NULL REFERENCES users(email)
+    sender_email VARCHAR(254) NOT NULL REFERENCES users(email),
+    PRIMARY KEY(id)
+);
+
+CREATE TABLE IF NOT EXISTS processes
+(
+    id int(12) NOT NULL UNIQUE AUTO_IMCREMENT,
+    comp_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id), -- computer the process runs on
+    name VARCHAR(32) NOT NULL REFERENCES files(file_name), -- file which started the process
+    started_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process was initiated
+    finished_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process will be done
+    memory INT(8) DEFAULT 0 REFERENCES files(memory)
+    PRIMARY KEY(id)
 );
