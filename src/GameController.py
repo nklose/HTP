@@ -29,6 +29,7 @@ from Database import Database
 DEBUG_LEVEL = 1                      # verbosity; 0=disabled, 1=important, 2=info
 GAME_VERSION = 0.1                   # current version of HTP
 GAME_TIMESTAMP = '2016-01-23'        # date on which game was last updated
+OS_MEMORY = 52                       # base memory in MB used by the OS
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'    # standard timestamp format
 CMD_LOG_DIR = '../cmd_log'           # directory to store logs of user commands
 NOTE_DIR = '../data/notes'           # directory to store in-game notes

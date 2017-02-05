@@ -75,17 +75,17 @@ class File:
     # runs an executable program
     def run(self):
         if self.category == 'FIREWALL':
-            gc.message('Running firewall...')
+            gc.warning('Your strongest firewall is automatically running in the background.')
         elif self.category == 'ANTIVIRUS':
-            gc.message('Running antivirus...')
+            gc.msg('Running virus scan with ' + self.name + '...')
         elif self.category == 'ADWARE':
-            gc.message('Installing adware bot...')
+            gc.msg('Installing adware bot...')
         elif self.category == 'SPAMBOT':
-            gc.message('Installing spambot...')
+            gc.msg('Installing spambot...')
         elif self.category == 'MINER':
-            gc.message('Installing cryptominer...')
+            gc.msg('Installing cryptominer...')
         elif self.category == 'CRACKER':
-            gc.message('Attempting to crack password...')
+            gc.msg('Attempting to crack password...')
         else:
             gc.error('That file isn\'t executable and can\'t be run.')
 
@@ -101,16 +101,17 @@ class File:
         self.modified_time = gc.current_time()
 
         args = [self.name, self.parent_id, self.content, self.type,
-                self.level, self.size]
+                self.level, self.size, self.category, self.comment, self.memory]
 
         self.lookup()
         if not self.exists:
             sql = 'INSERT INTO files (file_name, parent_id, content, file_type, '
-            sql += 'file_level, file_size, modified_time) VALUES (%s, %s, %s, %s, %s, %s, now())'
+            sql += 'file_level, file_size, category, comment, memory, modified_time) '
+            sql += 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, now())'
         else:
             sql = 'UPDATE files SET file_name = %s, parent_id = %s, content = %s, '
-            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now() '
-            sql += 'WHERE id = %s'
+            sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now(), category = %s, '
+            sql += 'comment = %s, memory = %s WHERE id = %s'
             args.append(self.id)
         db.post_query(sql, args)
         db.close()
@@ -202,6 +203,8 @@ class File:
                     self.level = int(text[1])
                 elif text[0] == 'SIZE':
                     self.size = int(text[1])
+                elif text[0] == 'MEMORY':
+                    self.memory = int(text[1])
                 elif text[0] == 'CATEGORY':
                     self.category = text[1]
                 elif text[0] == 'COMMENT':

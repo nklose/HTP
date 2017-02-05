@@ -37,8 +37,8 @@ class Computer:
         self.cpu = 512
         self.hdd = 1
         self.disk_free = self.hdd * 1024 ** 3
-        self.fw_level = 0
-        self.av_level = 0
+        self.firewall = File('none', Directory())
+        self.firewall.level = 0
         self.ip = '0.0.0.0'
         self.password = ''
         self.bank_id = None
@@ -89,9 +89,7 @@ class Computer:
             self.cpu = int(result[0][8])
             self.hdd = int(result[0][9])
             self.disk_free = int(result[0][10])
-            self.fw_level = int(result[0][11])
-            self.av_level = int(result[0][12])
-            self.online = bool(result[0][13])
+            self.online = bool(result[0][11])
             self.check_space()
 
             # get root folder ID
@@ -103,6 +101,9 @@ class Computer:
                 self.root_dir.lookup()
         db.close()
 
+        # select the appropriate firewall
+        self.set_firewall()
+
     # writes the current object's state to the database
     def save(self):
         db = Database()
@@ -113,10 +114,9 @@ class Computer:
             # create the computer
             sql = 'INSERT INTO computers (ip, password, domain_name, owner_id, last_login, bank_id, '
             sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, online) VALUES '
-            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-            args = [self.ip, self.password, self.domain, self.owner_id,
-                self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
-                self.fw_level, self.av_level, self.online]
+            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            args = [self.ip, self.password, self.domain, self.owner_id, self.last_login,
+                self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free, self.online]
             self.exists = True
             db.post_query(sql, args)
             self.lookup()
@@ -127,11 +127,10 @@ class Computer:
             db.post_query(sql, args)
         else:
             sql = 'UPDATE computers SET password = %s, owner_id = %s, last_login = %s, '
-            sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, fw_level = %s, '
-            sql += 'av_level = %s, online = %s WHERE ip = %s'
-            args = [self.password, self.domain, self.owner_id,
-                self.last_login, self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free,
-                self.fw_level, self.av_level, self.online, self.ip]
+            sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, online = %s '
+            sql += 'WHERE ip = %s'
+            args = [self.password, self.domain, self.owner_id, self.last_login, self.bank_id,
+                self.ram, self.cpu, self.hdd, self.disk_free,self.online, self.ip]
             db.post_query(sql, args)
         db.close()
 
@@ -290,9 +289,38 @@ class Computer:
         if not banner_file.exists:
             banner_file.content = 'Welcome to ' + self.ip + '.'
             banner_file.save()
-        banner_lines = banner_file.content.split('\n') 
+        banner_lines = banner_file.content.split('\n')
         lines_printed = 0
         for line in banner_lines:
             if lines_printed < 10:
                 print '    ' + colored(line, 'yellow')
             lines_printed += 1
+
+    # return a list of all files on this computer
+    def get_all_files(self):
+        all_files = []
+        all_dirs = [self.root_dir] + self.root_dir.subdirs
+        for directory in all_dirs:
+            all_files += directory.files
+        return all_files
+
+    # select which firewall to use
+    def set_firewall(self):
+        for file in self.get_all_files():
+            # check if file is a firewall
+            if file.category == 'FIREWALL' and file.level > self.firewall.level:
+                # check if there is enough memory to run it
+                if file.memory <= self.get_memory_free():
+                    # set this as the new firewall
+                    self.firewall = file
+
+
+    # calculates how much memory is available for new processes
+    def get_memory_free(self):
+        free = self.ram
+        # check OS memory
+        free -= gc.OS_MEMORY
+        # check memory used by firewall
+        free -= self.firewall.memory
+        # add process memory
+        return free

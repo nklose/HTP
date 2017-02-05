@@ -122,20 +122,22 @@ class User:
         c = self.computer
         msg_box = MessageBox()
         msg_box.set_title('User Summary')
-        msg_box.add_property('RAM', str(c.ram) + ' MB')
+        # basic summary
         msg_box.add_property('CPU', str(c.cpu) + ' MHz')
-        msg_box.add_property('Disk', str(c.hdd) + ' GB')
-        msg_box.add_property('Free', gc.hr_bytes(c.disk_free))
-        msg_box.add_property('Firewall', 'Level ' + str(c.fw_level))
-        msg_box.add_property('Antivirus', 'Level ' + str(c.av_level))
+        msg_box.add_property('RAM Total', str(c.ram) + ' MB')
+        msg_box.add_property('RAM Free', str(c.get_memory_free()) + ' MB')
+        msg_box.add_property('Disk Total', str(c.hdd) + ' GB')
+        msg_box.add_property('Disk Free', gc.hr_bytes(c.disk_free))
+        msg_box.add_property('Process Count', '0')
         msg_box.hr()
+        # security info
         msg_box.add_property('IP Address', c.ip)
+        msg_box.add_property('Firewall', 'Level ' + str(c.firewall.level) + ' (' + c.firewall.name + ')')
+        msg_box.add_property('Last Login', str(self.last_login) + ' [MST]')
         msg_box.add_property('Root Password', str(c.password))
         msg_box.hr()
-        # add user details
+        # user details
         msg_box.add_property('Handle', self.handle)
-        msg_box.add_property('Last Login', str(self.last_login) + ' [MST]')
-        # number of bank accounts
         msg_box.add_property('Total Funds', str(total_funds) + ' dollars')
         msg_box.add_property('# of Accounts', str(num_accounts))
 
