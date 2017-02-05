@@ -72,17 +72,22 @@ class File:
 
         db.close()
 
-    def get_content(self):
-        return self.content
-
-    def rename(self, new_name):
-        pass
-
-    def move(self, new_dir_id):
-        pass
-
-    def copy(self, dest_id):
-        pass
+    # runs an executable program
+    def run(self):
+        if self.category == 'FIREWALL':
+            gc.message('Running firewall...')
+        elif self.category == 'ANTIVIRUS':
+            gc.message('Running antivirus...')
+        elif self.category == 'ADWARE':
+            gc.message('Installing adware bot...')
+        elif self.category == 'SPAMBOT':
+            gc.message('Installing spambot...')
+        elif self.category == 'MINER':
+            gc.message('Installing cryptominer...')
+        elif self.category == 'CRACKER':
+            gc.message('Attempting to crack password...')
+        else:
+            gc.error('That file isn\'t executable and can\'t be run.')
 
     # synchronize object with database
     def save(self):
@@ -110,6 +115,18 @@ class File:
         db.post_query(sql, args)
         db.close()
 
+    def get_content(self):
+        return self.content
+
+    def rename(self, new_name):
+        pass
+
+    def move(self, new_dir_id):
+        pass
+
+    def copy(self, dest_id):
+        pass
+
     # permanently delete this file
     def delete(self):
         self.lookup()
@@ -130,7 +147,7 @@ class File:
         mb.add_property('Level', str(self.level))
         mb.add_property('Created On', self.creation_time)
         mb.add_property('Modified On', self.modified_time)
-        if self.category != '':
+        if self.category != None and self.category != '':
             mb.add_property('Category', self.category)
         if self.memory != 0:
             mb.add_property('Memory Req.', str(self.memory) + ' MB')

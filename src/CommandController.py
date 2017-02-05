@@ -383,7 +383,7 @@ def prompt(user):
                 # TODO: add regex match for IP/domain
                 target = cmds[1]
                 gc.msg('Pinging ' + target + '...')
-                
+
                 if target in ['127.0.0.1', 'localhost']:
                     i = 0
                     while i < 3:
@@ -411,7 +411,7 @@ def prompt(user):
                                 reply += ' [' + c2.ip + ']'
                             reply += ' (time: ' + ms + ')'
                             gc.success(reply)
-                            
+
                         else:
                             gc.warning('  Request timed out.')
 
@@ -464,6 +464,19 @@ def prompt(user):
                 gc.msg('This command is used to verify an email address with a given token.')
                 gc.msg('If you want to resend the verification email, type \'verify resend\'.')
                 gc.msg('To change the email linked to your account, type \'set email\'.')
+
+        # executes a program
+        elif base_cmd == 'run':
+            if len(cmds) > 1:
+                binfile = File(cmds[1], computer.root_dir)
+                binfile.lookup()
+                if binfile.exists:
+                    binfile.run()
+                else:
+                    gc.error('That program doesn\'t exist here.')
+            else:
+                # show command usage
+                gc.msg('Enter \'run <file>\' to execute a binary program.')
 
         # exit the game (TODO: remove this for production)
         elif base_cmd in ['exit', 'quit']:
