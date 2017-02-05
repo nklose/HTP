@@ -82,6 +82,7 @@ def prompt(user):
             mb.add_property('chat', 'opens the global chat room')
             mb.add_property('disk', 'shows information about disk usage')
             mb.add_property('log', 'prints out the system log')
+            mb.add_property('summary', 'shows the login summary again')
             mb.add_heading('Files and Directories')
             mb.add_property('ls (dir)', 'lists objects in the current directory')
             mb.add_property('cd <dir>', 'jumps to the directory <dir>')
@@ -477,6 +478,10 @@ def prompt(user):
             else:
                 # show command usage
                 gc.msg('Enter \'run <file>\' to execute a binary program.')
+
+        # shows the user login summary
+        elif base_cmd == 'summary':
+            user.show_summary()
 
         # exit the game (TODO: remove this for production)
         elif base_cmd in ['exit', 'quit']:
