@@ -357,7 +357,8 @@ def prompt(user):
                             password = raw_input('  Password: ')
                             time.sleep(1)
                             if password == c.password:
-                                gc.success('Connected to ' + target + '.')
+                                gc.success('Connected to ' + target + '.\n')
+                                c.show_login_banner()
                                 correct = True
                                 computer = c
                                 directory = c.root_dir

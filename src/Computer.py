@@ -27,6 +27,8 @@ from Database import Database
 from Directory import Directory
 from MessageBox import MessageBox
 
+from termcolor import colored
+
 class Computer:
 
     def __init__(self, owner_id = -1):
@@ -267,3 +269,30 @@ class Computer:
         else:
             gc.error('An error occurred while creating the default files.')
 
+    # get os directory for this computer
+    def get_os_dir(self):
+        db = Database()
+        sql = 'SELECT * FROM directories WHERE parent_id = %s'
+        args = [self.root_dir.id]
+        result = db.get_query(sql, args)
+        db.close()
+        os_dir = Directory(id = result[0][0])
+        os_dir.lookup()
+        if os_dir.exists:
+            return os_dir
+        else:
+            gc.error('An error occurred loading the login banner.')
+
+    # show login banner text
+    def show_login_banner(self):
+        banner_file = File('banner.txt', self.get_os_dir())
+        banner_file.lookup()
+        if not banner_file.exists:
+            banner_file.content = 'Welcome to ' + self.ip + '.'
+            banner_file.save()
+        banner_lines = banner_file.content.split('\n') 
+        lines_printed = 0
+        for line in banner_lines:
+            if lines_printed < 10:
+                print '    ' + colored(line, 'yellow')
+            lines_printed += 1

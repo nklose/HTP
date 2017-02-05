@@ -100,6 +100,7 @@ class User:
 
     # Displays user summary
     def show_summary(self):
+
         db = Database ()
 
         # get bank account info
@@ -140,8 +141,10 @@ class User:
 
         msg_box.display()
         os_msg = 'You are running YardleOS ' + str(gc.GAME_VERSION) + ' (last updated '
-        os_msg += gc.GAME_TIMESTAMP + ')'
+        os_msg += gc.GAME_TIMESTAMP + ')\n'
         gc.msg(os_msg)
+
+        c.show_login_banner()
 
     def login(self):
         db = Database()
