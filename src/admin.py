@@ -259,15 +259,6 @@ def create_npc():
     hdd = raw_input('\tHDD (default = 1 GB): ')
     if hdd != '':
         c.hdd = int(hdd)
-    fw_level = raw_input('\tFW Level (default = 0): ')
-    if fw_level != '':
-        c.fw_level = int(fw_level)
-    av_level = raw_input('\tAV Level (default = 0): ')
-    if av_level != '':
-        c.av_level = int(av_level)
-    cr_level = raw_input('\tCR Level (default = 0): ')
-    if cr_level != '':
-        c.cr_level = int(cr_level)
     c.online = gc.prompt_yn('Is this NPC online?')
 
     mb = MessageBox()
@@ -287,30 +278,26 @@ def create_npc():
     notes = []
     emails = []
     programs = []
-    if gc.prompt_yn('Add notes/emails to NPC?'):
-        gc.msg('Enter one filename with extension per line.')
-        gc.msg('When you are done, enter a blank line.')
+    gc.msg('(Optional) Enter note file names to attach, separated by spaces.')
+    gc.msg('These must be valid files in the directory ' + gc.NOTE_DIR + '.')
+    note_str = raw_input('  Note Filenames: ')
+    note_list = note_str.split()
+    for note in note_list:
+        if note[6:] == '.email':
+            emails.append(note)
+        else:
+            notes.append(note)
 
-        add_more = True
-        while add_more:
-            note = raw_input('  Filename: ')
-            if note == '':
-                add_more = False
-            elif note[6:] == '.email':
-                emails.append(note)
-            else:
-                notes.append(note)
+    gc.msg('(Optional) Include binary program filenames, separated by spaces.')
+    gc.msg('These must be valid files in the directory ' + gc.PROGRAM_DIR + '.')
+    program_str = raw_input('  Program Filenames: ')
+    program_list = program_str.split()
+    for program in program_list:
+        programs.append(program)
 
-    if gc.prompt_yn('Add programs to NPC?'):
-        gc.msg('When you are done adding programs, enter a blank line.')
-        add_more = True
-        while add_more:
-            fname = raw_input('  Filename: ')
-            if fname == '':
-                add_more = False
-            else:
-                programs.append(fname)
-
+    gc.msg('(Optional) Specify the filename for the banner text to assign.')
+    gc.msg('This must be a valid file in the directory ' + gc.BANNER_DIR + '.')
+    banner_filename = raw_input('  Banner Filename: ')
 
     if gc.prompt_yn('Save new NPC to database?'):
         try:
@@ -329,12 +316,27 @@ def create_npc():
             file.write('RAM ' + str(c.ram) + '\n')
             file.write('CPU ' + str(c.cpu) + '\n')
             file.write('HDD ' + str(c.hdd) + '\n')
-            file.write('FW_LEVEL ' + str(c.fw_level) + '\n')
-            file.write('AV_LEVEL ' + str(c.av_level) + '\n')
-            file.write('CR_LEVEL ' + str(c.cr_level) + '\n')
             file.write('ONLINE ' + str(c.online) + '\n')
-            
+
+            # create OS directory
+            os_dir = Directory('os', c.root_dir.id)
+            os_dir.comp_id = c.id
+            os_dir.save()
+            os_dir.lookup()
+
+            # add banner file
+            banner_file = File('banner.txt', os_dir)
+            if banner_filename != '':
+                try:
+                    file.write('BANNER ' + banner_filename + '\n')
+                    banner_file.contents_from_file(os.path.join(gc.BANNER_DIR, banner_filename))
+                except Exception as e:
+                    gc.error('An error occurred loading banner file: ' + str(e))
+            else:
+                banner_file.content = c.ip + ' is running YardleOS version ' + gc.GAME_TIMESTAMP
+            banner_file.save()
             gc.success('Done.')
+            
 
             # add note folder if necessary
             if len(notes) > 0:
@@ -387,6 +389,9 @@ def create_npc():
                 for fname in programs:
                     binfile = File(fname, bin_dir)
                     binfile.program_from_file(os.path.join(gc.PROGRAM_DIR, fname))
+                    if binfile.category in ['ADWARE', 'SPAMBOT', 'MINER']:
+                        if gc.prompt_yn('  Is ' + binfile.name + ' active?', default = 'n'):
+                            binfile.activate(0)
                     binfile.save()
                     gc.success('Added binary file ' + fname + '.')
                     file.write('PROGRAM ' + fname + '\n')
@@ -394,7 +399,7 @@ def create_npc():
             file.close()
 
         except Exception as e:
-            gc.error('An error occurred: ' + str(e))
+            gc.error('An error occurred while creating computer: ' + str(e))
     else:
         gc.warning('NPC not saved.')
 
@@ -443,9 +448,6 @@ def show_computer(c):
     mb.add_property('CPU', str(c.cpu) + ' MHz')
     mb.add_property('HDD', str(c.hdd) + ' GB')
     mb.add_property('Disk Free', gc.hr_bytes(c.disk_free))
-    mb.add_property('FW Level', str(c.fw_level))
-    mb.add_property('AV Level', str(c.av_level))
-    mb.add_property('CR Level', str(c.cr_level))
     mb.display()
 
 # Shows stats about a single user
@@ -503,12 +505,6 @@ def load_npcs():
                         npc.cpu = int(text[1])
                     elif text[0] == 'HDD':
                         npc.hdd = int(text[1])
-                    elif text[0] == 'FW_LEVEL':
-                        npc.fw_level = int(text[1])
-                    elif text[0] == 'AV_LEVEL':
-                        npc.av_level = int(text[1])
-                    elif text[0] == 'CR_LEVEL':
-                        npc.cr_level = int(text[1])
                     elif text[0] == 'ONLINE':
                         npc.online = bool(text[1])
                     elif text[0] == 'NOTE':
