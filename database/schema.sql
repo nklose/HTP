@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS computers
     ram INT(8) DEFAULT 512, -- total RAM in MB
     cpu INT(8) DEFAULT 512, -- total CPU speed in MHz
     hdd INT(8) DEFAULT 1, -- total hard drive space in GB (smallest drive is 1 GB)
-    disk_free INT(12) DEFAULT 0, -- total free disk space in bytes
     online TINYINT(1) DEFAULT 1, -- whether or not the computer can be contacted
     PRIMARY KEY(id)
 );
@@ -48,15 +47,16 @@ CREATE TABLE IF NOT EXISTS files
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
     file_name VARCHAR(32) NOT NULL,
     parent_id INT(12) NOT NULL REFERENCES directories(id),
-    content VARCHAR(4096),
+    content VARCHAR(4096) DEFAULT NULL,
     file_type VARCHAR(5) NOT NULL,
     file_level INT(2) NOT NULL,
     file_size INT(12) NOT NULL, -- size in bytes
     creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     category VARCHAR(32) DEFAULT NULL, -- e.g. 'fw', 'cr'
-    comment VARCHAR(128)  NOT NULL DEFAULT '', -- description for .bin files
-    memory INT(8) DEFAULT 0, -- memory usage for .bin files in MB
+    comment VARCHAR(128) DEFAULT NULL, -- description for .bin files
+    memory INT(8) DEFAULT NULL, -- memory usage for .bin files in MB
+    is_live TINYINT(1) DEFAULT NULL, -- whether or not a virus file is live
     PRIMARY KEY(id)
 );
 
@@ -95,11 +95,11 @@ CREATE TABLE IF NOT EXISTS emails
 
 CREATE TABLE IF NOT EXISTS processes
 (
-    id int(12) NOT NULL UNIQUE AUTO_IMCREMENT,
+    id int(12) NOT NULL UNIQUE AUTO_INCREMENT,
     comp_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id), -- computer the process runs on
     name VARCHAR(32) NOT NULL REFERENCES files(file_name), -- file which started the process
     started_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process was initiated
     finished_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process will be done
-    memory INT(8) DEFAULT 0 REFERENCES files(memory)
+    memory INT(8) DEFAULT 0 REFERENCES files(memory),
     PRIMARY KEY(id)
 );

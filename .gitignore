@@ -94,8 +94,3 @@ ENV/
 \#*#
 irc.txt
 *.log
-
-# Campaign files
-data/notes
-data/npcs
-data/programs

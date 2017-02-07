@@ -1,0 +1,5 @@
+LEVEL 3
+SIZE 80530636
+MEMORY 38
+CATEGORY FIREWALL
+COMMENT Lightweight version of Open Firewall. Small file size but limited to basic features.
