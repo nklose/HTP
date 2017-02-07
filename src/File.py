@@ -21,7 +21,7 @@ from MessageBox import MessageBox
 
 class File:
 
-    def __init__(self, name, parent, content = '', f_type = 'txt', level = 1, size = 0):
+    def __init__(self, name, parent, content = None, f_type = 'txt', level = 1, size = 0):
         self.name = name
         self.parent = parent
         self.parent_id = parent.id
@@ -33,9 +33,10 @@ class File:
         self.id = -1
         self.creation_time = gc.current_time()
         self.modified_time = self.creation_time
-        self.category = ''
-        self.comment = 0
-        self.memory = 0
+        self.category = None
+        self.comment = None
+        self.memory = None
+        self.is_live = False
 
         if type == 'txt':
             self.size = len(content)
@@ -66,9 +67,13 @@ class File:
             self.modified_time = gc.ts_to_string(result[0][8])
             self.category = result[0][9]
             self.comment = result[0][10]
-            self.memory = (result[0][11])
+            if result[0][11] != None:
+                self.memory = int(result[0][11])
+            self.is_live = bool(result[0][12])
             if self.type == 'txt':
-                self.size = len(self.name) + len(self.content)
+                self.size = len(self.name)
+                if self.content != None:
+                    self.size += len(self.content)
 
         db.close()
 
@@ -95,23 +100,25 @@ class File:
 
         # update file size
         if self.type == 'txt':
-            self.size = len(self.name) + len(self.content)
+            self.size = len(self.name) 
+            if self.content != None:
+                self.size += len(self.content)
 
         # update modified timestamp
         self.modified_time = gc.current_time()
 
         args = [self.name, self.parent_id, self.content, self.type,
-                self.level, self.size, self.category, self.comment, self.memory]
+                self.level, self.size, self.category, self.comment, self.memory, self.is_live]
 
         self.lookup()
         if not self.exists:
             sql = 'INSERT INTO files (file_name, parent_id, content, file_type, '
-            sql += 'file_level, file_size, category, comment, memory, modified_time) '
-            sql += 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, now())'
+            sql += 'file_level, file_size, category, comment, memory, modified_time, is_live) '
+            sql += 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s)'
         else:
             sql = 'UPDATE files SET file_name = %s, parent_id = %s, content = %s, '
             sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now(), category = %s, '
-            sql += 'comment = %s, memory = %s WHERE id = %s'
+            sql += 'comment = %s, memory = %s, is_live = %s WHERE id = %s'
             args.append(self.id)
         db.post_query(sql, args)
         db.close()
@@ -145,14 +152,16 @@ class File:
         mb.add_property('Total Size', gc.hr_bytes(self.size))
         mb.add_property('File Type', gc.str_to_type(self.type))
         mb.add_property('Parent Folder', self.parent.fullpath)
-        mb.add_property('Level', str(self.level))
+        if not self.is_live:
+            mb.add_property('Level', str(self.level))
         mb.add_property('Created On', self.creation_time)
         mb.add_property('Modified On', self.modified_time)
-        if self.category != None and self.category != '':
+        if self.category != None and self.category != '' and not self.is_live:
             mb.add_property('Category', self.category)
         if self.memory != 0:
             mb.add_property('Memory Req.', str(self.memory) + ' MB')
-        mb.add_long_text('COMMENT: ' + self.comment)
+        if not self.is_live:
+            mb.add_long_text('COMMENT: ' + self.comment)
         mb.display()
 
     # prints the contents of a file
@@ -214,10 +223,15 @@ class File:
 
     # loads a specific note file
     def load_note(self, name):
-        filepath = os.path.join(gc.NOTE_DIR, name + '.txt')
+        filepath = os.path.join(gc.NOTE_DIR, name)
         self.contents_from_file(filepath)
 
     # returns True only if this file is the OS log file for its computer
     def is_log_file(self):
         return self.name == 'log.txt' and self.parent.name == 'os' and self.parent.nesting == 2
 
+    # activates a virus on behalf of a specified user
+    def activate(self, user_id):
+        self.name = gc.gen_virus_name()
+        self.is_live = True
+        self.content = 'OWNER ' + str(user_id)

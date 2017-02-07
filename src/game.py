@@ -70,6 +70,7 @@ def main():
 # Shows a user's profile summary
 def profile(user, new_login = False):
     user.show_summary()
+    user.computer.show_login_banner()
     gc.info('Enter \'help\' for a list of commands.\n')
     if new_login: # update last login timestamp if user just logged in
         user.new_login()

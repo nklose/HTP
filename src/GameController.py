@@ -34,7 +34,8 @@ TIME_FORMAT = '%Y-%m-%d %H:%M:%S'    # standard timestamp format
 CMD_LOG_DIR = '../cmd_log'           # directory to store logs of user commands
 NOTE_DIR = '../data/notes'           # directory to store in-game notes
 NPC_DIR = '../data/npcs'             # directory to store NPC info files
-PROGRAM_DIR = '../data/programs'     # data to store binary descriptions
+PROGRAM_DIR = '../data/programs'     # directory to store binary descriptions
+BANNER_DIR = '../data/banners'       # directory to store NPC banner text files
 CMD_LOG_LENGTH = 100                 # number of commands per user to save
 MAX_FILE_SIZE = 4096                 # max characters allowed in a file
 DIR_MAX_LENGTH = 16                  # max chars for a directory name
@@ -60,8 +61,7 @@ def ts_to_string(ts):
 
 # Generate a random password
 def gen_password():
-    length = random.randint(8, 12)
-    return ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(length))
+    return gen_string(random.randint(8, 12))
 
 # Generate a random unique token
 def gen_token():
@@ -69,7 +69,7 @@ def gen_token():
     unique = False
     db = Database()
     while not unique:
-        token = ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(12))
+        token = gen_string(12)
         sql = 'SELECT * FROM users WHERE token = %s'
         args = [token]
         response = db.get_query(sql, args)
@@ -77,6 +77,14 @@ def gen_token():
             unique = True
     db.close()
     return token
+
+# Generates a random name for an activated virus
+def gen_virus_name():
+    return gen_string(8) + '.bin'
+
+# Generates a randomized string of specified length
+def gen_string(length):
+    return ''.join(random.choice('0123456789abcdefghijklmnopqrstuvwxyz') for i in range(length))
 
 # Generate a random IP
 def gen_ip():
@@ -111,8 +119,14 @@ def check_hash(password, hashed_pw):
     return hashed_pw == hashlib.sha256(salt.encode() + password.encode()).hexdigest()
 
 # Prompts the user with a yes or no question
-def prompt_yn(message):
-    return raw_input(colored('  ' + message + ' (Y/N): ', 'cyan')).lower() == 'y'
+def prompt_yn(message, default = 'y'):
+    yn_str = ''
+    if default == 'y':
+        yn_str = ' (Y/n): '
+    else:
+        yn_str = ' (y/N): '
+    choice = raw_input(colored('  ' + message + yn_str, 'cyan')).lower()
+    return choice == 'y' or (choice == '' and default == 'y')
 
 ## Output Messages
 # Standard Message

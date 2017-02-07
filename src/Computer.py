@@ -88,8 +88,7 @@ class Computer:
             self.ram = int(result[0][7])
             self.cpu = int(result[0][8])
             self.hdd = int(result[0][9])
-            self.disk_free = int(result[0][10])
-            self.online = bool(result[0][11])
+            self.online = bool(result[0][10])
             self.check_space()
 
             # get root folder ID
@@ -113,10 +112,10 @@ class Computer:
         if not self.exists:
             # create the computer
             sql = 'INSERT INTO computers (ip, password, domain_name, owner_id, last_login, bank_id, '
-            sql += 'ram, cpu, hdd, disk_free, fw_level, av_level, online) VALUES '
-            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            sql += 'ram, cpu, hdd, online) VALUES '
+            sql += '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             args = [self.ip, self.password, self.domain, self.owner_id, self.last_login,
-                self.bank_id, self.ram, self.cpu, self.hdd, self.disk_free, self.online]
+                self.bank_id, self.ram, self.cpu, self.hdd, self.online]
             self.exists = True
             db.post_query(sql, args)
             self.lookup()
@@ -127,10 +126,10 @@ class Computer:
             db.post_query(sql, args)
         else:
             sql = 'UPDATE computers SET password = %s, owner_id = %s, last_login = %s, '
-            sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, disk_free = %s, online = %s '
+            sql += 'bank_id = %s, ram = %s, cpu = %s, hdd = %s, online = %s '
             sql += 'WHERE ip = %s'
             args = [self.password, self.domain, self.owner_id, self.last_login, self.bank_id,
-                self.ram, self.cpu, self.hdd, self.disk_free,self.online, self.ip]
+                self.ram, self.cpu, self.hdd, self.online, self.ip]
             db.post_query(sql, args)
         db.close()
 
@@ -158,7 +157,9 @@ class Computer:
                     f_size = 0
                     f_type = file[4]
                     if f_type == 'txt': # for text files, size is length of name and content
-                        f_size = len(file[1]) + len(file[3])
+                        f_size = len(file[1])
+                        if file[3] != None:
+                            f_size += len(file[3])
                     else:
                         f_size = int(file[6])
 
@@ -243,8 +244,6 @@ class Computer:
         sql = 'UPDATE files SET content = %s, modified_time = now() WHERE id = %s'
         args = [new_content, log_id]
         db.post_query(sql, args)
-
-
         db.close()
 
     # adds a default set of files for new users
@@ -253,7 +252,7 @@ class Computer:
         if self.root_dir.exists:
             # add initial note
             note = File('note.txt', self.root_dir)
-            note.load_note('note1')
+            note.load_note('note.txt')
             note.save()
 
             # add basic firewall
@@ -271,16 +270,24 @@ class Computer:
     # get os directory for this computer
     def get_os_dir(self):
         db = Database()
-        sql = 'SELECT * FROM directories WHERE parent_id = %s'
-        args = [self.root_dir.id]
+        sql = 'SELECT * FROM directories WHERE parent_id = %s AND dir_name = %s'
+        args = [self.root_dir.id, 'os']
         result = db.get_query(sql, args)
         db.close()
-        os_dir = Directory(id = result[0][0])
-        os_dir.lookup()
-        if os_dir.exists:
-            return os_dir
+        if len(result) > 0:
+            os_dir = Directory(id = result[0][0])
+            os_dir.lookup()
+            if os_dir.exists:
+                return os_dir
+            else:
+                gc.error('An invalid OS directory ID was specified.')
         else:
-            gc.error('An error occurred loading the login banner.')
+            # create the OS directory
+            os_dir = Directory('os', self.root_dir.id)
+            os_dir.comp_id = self.id
+            os_dir.save()
+            os_dir.lookup()
+            return os_dir
 
     # show login banner text
     def show_login_banner(self):
@@ -321,6 +328,7 @@ class Computer:
         # check OS memory
         free -= gc.OS_MEMORY
         # check memory used by firewall
-        free -= self.firewall.memory
+        if self.firewall.memory != None:
+            free -= self.firewall.memory
         # add process memory
         return free

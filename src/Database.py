@@ -15,8 +15,6 @@
 import os
 import MySQLdb
 
-import GameController as gc
-
 class Database:
 
     def __init__(self):
@@ -32,13 +30,11 @@ class Database:
 
     # search database and return search values
     def get_query(self, sql, args = []):
-        gc.debug('GET: ' + sql + ' ' + str(args))
     	self.cursor.execute(sql, args)
         return self.cursor.fetchall()
 
     # update tables in the database
     def post_query(self, sql, args = []):
-        gc.debug('POST: ' + sql + ' ' + str(args))
         self.cursor.execute(sql, args)
         response = self.cursor.fetchall()
         self.con.commit()

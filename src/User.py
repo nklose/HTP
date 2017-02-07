@@ -146,8 +146,6 @@ class User:
         os_msg += gc.GAME_TIMESTAMP + ')\n'
         gc.msg(os_msg)
 
-        c.show_login_banner()
-
     def login(self):
         db = Database()
         valid_creds = False
@@ -232,6 +230,7 @@ class User:
             if self.email == '':
                 gc.warning('You have opted not to attach an email address to your account.')
                 email_set = True
+                self.email = None
             elif re.match(r'[^@]+@[^@]+\.[^@]+', self.email):
                 # check if email exists in database
                 sql = 'SELECT * FROM users WHERE email = %s;'
@@ -295,7 +294,7 @@ class User:
 
     # sends a confirmation email to validate the user's email address
     def confirm_email(self):
-        if self.email != '':
+        if self.email != None:
             try:
                 emailuser = os.environ['emailuser']
                 emailpass = os.environ['emailpass']
