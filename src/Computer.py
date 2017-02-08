@@ -329,8 +329,14 @@ class Computer:
         # check OS memory
         free -= gc.OS_MEMORY
         # check memory used by firewall
-        self.set_firewall()
         if self.firewall.memory != None:
             free -= self.firewall.memory
         # add process memory
+        db = Database()
+        sql = 'SELECT * FROM processes WHERE user_id = %s'
+        args = [self.owner_id]
+        results = db.get_query(sql, args)
+        for result in results:
+            free -= int(result[6])
+        db.close()
         return free

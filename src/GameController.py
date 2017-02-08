@@ -197,6 +197,11 @@ def hr_bytes(num):
 def hr_large(num):
     return '{:,}'.format(num)
 
+# Returns a human-readable string from a number of seconds
+def hr_seconds(num):
+    dt = datetime(1, 1, 1) + timedelta(seconds = num)
+    return '%d:%d:%d' % (dt.hour, dt.minute, dt.second)
+
 # Returns detailed file type from extension string
 def str_to_type(str):
     if str == 'txt':

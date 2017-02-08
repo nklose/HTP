@@ -25,6 +25,7 @@ import GameController as gc
 
 from User import User
 from File import File
+from Process import Process
 from Computer import Computer
 from Database import Database
 from Directory import Directory
@@ -95,6 +96,7 @@ def prompt(user):
             mb.add_property('rn (rename) <obj> <name>', 'sets <obj>\'s name to <name>')
             mb.add_property('mv (move) <obj> <dir>', 'moves <obj> to directory <dir>')
             mb.add_property('info <obj>', 'shows detailed info about <obj>')
+            mb.add_property('processes (ps)', 'shows your running processes')
             mb.add_heading('Networking')
             mb.add_property('ping <target>', 'sends an echo request to the IP or domain <target>')
             mb.add_property('ssh <target>', 'attempts to log into IP or domain <target>')
@@ -482,6 +484,52 @@ def prompt(user):
         # shows the user login summary
         elif base_cmd == 'summary':
             user.show_summary()
+
+        # show running processes
+        elif base_cmd in ['ps', 'processes']:
+            mb = MessageBox()
+            mb.set_title('Running processes for ' + user.handle + ':')
+
+            db = Database()
+            sql = 'SELECT * FROM processes WHERE user_id = %s'
+            args = [user.id]
+            results = db.get_query(sql, args)
+            for result in results:
+                pr_id = int(result[0])
+                comp_id = int(result[1])
+                file_id = int(result[2])
+                started_on = result[4]
+                finished_on = result[5]
+                memory = int(result[6])
+
+                # get file object
+                sql = 'SELECT * FROM files WHERE id = %s'
+                args = [file_id]
+                file_result = db.get_query(sql, args)
+                file_name = file_result[0][1]
+                parent_id = int(file_result[0][2])
+                parent = Directory(id = parent_id)
+                parent.lookup()
+                file = File(file_name, parent)
+                file.lookup()
+
+                # get computer object
+                computer = Computer(id = comp_id)
+                computer.lookup()
+
+                # get time remaining
+                process = Process(id = pr_id)
+                process.lookup()
+                seconds = process.get_time_remaining()
+                remaining = gc.hr_seconds(seconds)
+
+                # add to message box
+                property_str = 'on ' + computer.ip + ' (' + str(memory) + ' MB) '
+                property_str += 'with ' + remaining + ' remaining'
+                mb.add_property(file.name, property_str)
+
+            db.close()
+            mb.display()
 
         # exit the game (TODO: remove this for production)
         elif base_cmd in ['exit', 'quit']:

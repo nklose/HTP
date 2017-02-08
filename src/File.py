@@ -24,7 +24,7 @@ class File:
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
-        self.id = id
+        self.id = -1
         self.content = None
         self.type = 'txt'
         self.level = 1
@@ -89,7 +89,7 @@ class File:
 
         # update file size
         if self.type == 'txt':
-            self.size = len(self.name) 
+            self.size = len(self.name)
             if self.content != None:
                 self.size += len(self.content)
 
