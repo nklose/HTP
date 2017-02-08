@@ -32,7 +32,7 @@ from getpass import getpass
 
 class User:
 
-    def __init__(self, username = '', email = '', password = '', handle = ''):
+    def __init__(self, username = '', email = '', password = '', handle = '', id = -1):
         self.name = username
         self.email = email
         self.email_confirmed = False
@@ -42,24 +42,34 @@ class User:
         self.last_login = gc.current_time()
         self.creation_date = gc.current_time()
         self.computer = Computer()
-        self.id = -1
+        self.id = id
         self.token = ''
         self.token_date = None
 
-    # gets information from database for a specific username if it exists
+    # gets information about user from database
     def lookup(self):
         db = Database()
         sql = ''
         args = []
+
         # search by username
         if self.name != '':
-            sql = "SELECT * FROM users WHERE username = %s"
+            sql = 'SELECT * FROM users WHERE username = %s'
             args = [self.name]
+        # search by ID
+        elif self.id != -1:
+            sql = 'SELECT * FROM users WHERE id = %s'
+            args = [self.id]
+        else:
+            gc.error('Not enough information to look up user.')
+
+        # get information
         result = db.get_query(sql, args)
         computer_id = -1
         if len(result) > 0:
             self.exists = True
             self.id = int(result[0][0])
+            self.name = result[0][1]
             self.email = result[0][2]
             email_confirmed = int(result[0][3])
             self.email_confirmed = email_confirmed == 1
@@ -339,4 +349,53 @@ class User:
         home_dir = Directory(id = home_dir_id)
         home_dir.lookup()
         return home_dir
+
+    # attempts a password reset on an account
+    def reset_password(self):
+        db = Database()
+        gc.msg('Beginning the password reset process...')
+        self.name = raw_input('  Please enter your username: ')
+        self.lookup()
+        # check if the user is registered
+        if self.exists:
+            # check if they already have a reset token
+            if self.email == '':
+                gc.error('Sorry, you are not eligible to use the password reset feature.')
+                gc.warning('Only accounts with a valid email address attached can use this feature.')
+                gc.msg('Please contact our staff at ' + CONTACT_EMAIL + ' for further assistance.')
+            elif self.token == '':
+                # generate a token and send it to the user
+                self.confirm_email()
+                self.save()
+                gc.msg('Please check your email for a validation code, then use the \'Reset Password\' feature again.')
+            elif self.token_date < gc.string_to_ts(gc.current_time()) - gc.timedelta(days = 1):
+                gc.warning('Your reset token has expired. Sending another one...')
+                self.confirm_email()
+                self.save()
+            else:
+                token = raw_input('  Please enter your reset token: ')
+                if token == self.token:
+                    gc.msg('You can now set a password for your account.')
+                    valid_password = False
+                    while not valid_password:
+                        password = getpass()
+                        if len(password) < 6:
+                            gc.error('Your password must contain 6 or more characters.')
+                        else:
+                            confirm = getpass('Confirm: ')
+                            if password != confirm:
+                                gc.error('Sorry, those passwords didn\'t match.')
+                            else:
+                                valid_password = True
+                                self.password = hash_password(password, self.name)
+                    self.token = ''
+                    self.save()
+                else:
+                    gc.warning('Sorry, that token is not valid. Sending another one...')
+                    self.confirm_email()
+                    self.save()
+
+        else:
+            gc.error('Sorry, that username is not registered.')
+        db.close()
 
