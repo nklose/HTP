@@ -30,6 +30,8 @@ from Directory import Directory
 from datetime import datetime
 from getpass import getpass
 
+from termcolor import colored
+
 class User:
 
     def __init__(self, username = '', email = '', password = '', handle = '', id = -1):
@@ -399,3 +401,41 @@ class User:
             gc.error('Sorry, that username is not registered.')
         db.close()
 
+    # runs an executable program as a specific user
+    def run_program(self, file):
+        if file.category == 'FIREWALL':
+            gc.warning('Your strongest firewall is automatically running in the background.')
+        elif file.category == 'ANTIVIRUS':
+            gc.msg('Running virus scan with ' + self.name + '...')
+        elif file.category == 'ADWARE':
+            gc.msg('Installing adware bot...')
+        elif file.category == 'SPAMBOT':
+            # get target IP
+            text = colored('\n\tINITIATING ', 'green')
+            text += colored(file.name, 'yellow')
+            text += colored('\n\trun://H4CK/T3H/PL4N37/', 'magenta')
+            gc.typewriter(text)
+            target_ip = raw_input(colored('\tENTER TARGET IP:', 'red', attrs=['bold', 'reverse']) + ' ')
+            target_pw = raw_input(colored('\tENTER TARGET PW:', 'yellow', attrs=['bold', 'reverse']) + ' ')
+
+            db = Database()
+            sql = 'SELECT * FROM computers WHERE ip = %s'
+            args = [target_ip]
+            response = db.get_query(sql, args)
+            db.close()
+            # check target
+            if len(response) > 0:
+                if response[0][2] == target_pw:
+                    gc.typewriter(colored('\tTARGET ACQUIRED. LAUNCHING...\n', 'green', attrs = ['reverse']))
+                else:
+                    gc.typewriter(colored('\tINVALID PASSWORD. EXITING.\n', 'red'))
+            else:
+                gc.typewriter(colored('\tTARGET NOT FOUND. EXITING.\n', 'red'))
+
+
+        elif file.category == 'MINER':
+            gc.msg('Installing cryptominer...')
+        elif file.category == 'CRACKER':
+            gc.msg('Attempting to crack password...')
+        else:
+            gc.error('That file isn\'t executable and can\'t be run.')

@@ -474,7 +474,7 @@ def prompt(user):
                 binfile = File(cmds[1], computer.root_dir)
                 binfile.lookup()
                 if binfile.exists:
-                    binfile.run()
+                    user.run_program(binfile)
                 else:
                     gc.error('That program doesn\'t exist here.')
             else:
