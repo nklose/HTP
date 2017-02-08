@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users
 (
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
     username VARCHAR(16) NOT NULL UNIQUE,
-    email VARCHAR(254) NOT NULL UNIQUE,
+    email VARCHAR(254),
     email_confirmed TINYINT(1) NOT NULL DEFAULT 0, -- whether or not the email address has been confirmed
     last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

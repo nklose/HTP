@@ -20,6 +20,8 @@
 # - a root directory with a file system which may contain other files and directories
 # - a log file which records any major events on the computer
 
+import os
+
 import GameController as gc
 
 from File import File
@@ -254,10 +256,11 @@ class Computer:
             note.save()
 
             # add basic firewall
-            fw = File('freefw-01.bin', self.root_dir)
-            fw.type = 'bin'
-            fw.size = gc.to_bytes(51.6, 'MB')
+            fname = 'fw-free-v1.bin'
+            fw = File(fname, self.root_dir)
+            fw.program_from_file(os.path.join(gc.PROGRAM_DIR, fname))
             fw.save()
+            self.firewall = fw
 
             # update storage info
             self.check_space()
@@ -326,6 +329,7 @@ class Computer:
         # check OS memory
         free -= gc.OS_MEMORY
         # check memory used by firewall
+        self.set_firewall()
         if self.firewall.memory != None:
             free -= self.firewall.memory
         # add process memory
