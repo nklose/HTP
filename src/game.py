@@ -58,7 +58,8 @@ def main():
             register()
         # reset password
         elif choice == '3':
-            gc.reset_password()
+            u = User()
+            u.reset_password()
         # about
         elif choice == '4':
             about()
