@@ -336,7 +336,7 @@ def create_npc():
                 banner_file.content = c.ip + ' is running YardleOS version ' + gc.GAME_TIMESTAMP
             banner_file.save()
             gc.success('Done.')
-            
+
 
             # add note folder if necessary
             if len(notes) > 0:
@@ -563,7 +563,7 @@ def load_npcs():
 
                     for program in programs:
                         binfile = File(program, bin_dir)
-                        binfile.program_from_file(os.path.join(gc.NOTE_DIR, program))
+                        binfile.program_from_file(os.path.join(gc.PROGRAM_DIR, program))
                         binfile.save()
                         gc.success('Added program ' + program + '.')
 
