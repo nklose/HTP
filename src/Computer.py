@@ -33,7 +33,7 @@ from termcolor import colored
 
 class Computer:
 
-    def __init__(self, owner_id = -1, id = -1):
+    def __init__(self, owner_id = -1, id = -1, ip = '0.0.0.0'):
         self.owner_id = owner_id
         self.ram = 512
         self.cpu = 512
@@ -41,7 +41,7 @@ class Computer:
         self.disk_free = self.hdd * 1024 ** 3
         self.firewall = File('none', Directory())
         self.firewall.level = 0
-        self.ip = '0.0.0.0'
+        self.ip = ip
         self.password = ''
         self.bank_id = None
         self.domain = None
@@ -340,3 +340,4 @@ class Computer:
             free -= int(result[6])
         db.close()
         return free
+
