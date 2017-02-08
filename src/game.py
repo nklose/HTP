@@ -29,6 +29,7 @@ from ChatSession import ChatSession
 
 from threading import Thread
 from datetime import datetime
+from termcolor import colored
 
 # Handle keyboard interrupt shortcuts
 def signal_handler(signum, frame):
@@ -39,7 +40,7 @@ def signal_handler(signum, frame):
 def main():
     gc.clear()
 
-    print('\n\tWelcome to Hack the Planet!')
+    gc.typewriter(colored('\n\tWelcome to Hack the Planet!', 'green', attrs = ['bold']))
 
     valid_choice = False
     while not valid_choice:

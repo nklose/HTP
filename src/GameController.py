@@ -171,7 +171,7 @@ def typewriter(message):
     for c in message:
         sys.stdout.write(c)
         sys.stdout.flush()
-        time.sleep(random.uniform(0, 0.2))
+        time.sleep(random.uniform(0.000, 0.050))
     sys.stdout.write('\n')
 
 # Clear screen

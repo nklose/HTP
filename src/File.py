@@ -19,6 +19,8 @@ import GameController as gc
 from Database import Database
 from MessageBox import MessageBox
 
+from termcolor import colored
+
 class File:
 
     def __init__(self, name, parent):
@@ -75,7 +77,30 @@ class File:
         elif self.category == 'ADWARE':
             gc.msg('Installing adware bot...')
         elif self.category == 'SPAMBOT':
-            gc.msg('Installing spambot...')
+            # get target IP
+            text = colored('\n\tINITIATING ', 'green')
+            text += colored(self.name, 'yellow')
+            text += colored('\n\trun://H4CK/T3H/PL4N37/', 'magenta')
+            gc.typewriter(text)
+            target_ip = raw_input(colored('\tENTER TARGET IP:', 'red', attrs=['bold', 'reverse']) + ' ')
+            target_pw = raw_input(colored('\tENTER TARGET PW:', 'yellow', attrs=['bold', 'reverse']) + ' ')
+
+            # look up target
+            db = Database()
+            sql = 'SELECT * FROM computers WHERE ip = %s'
+            args = [target_ip]
+            response = db.get_query(sql, args)
+
+            db.close()
+            if len(response) > 0:
+                if response[0][2] == target_pw:
+                    gc.typewriter(colored('\tTARGET ACQUIRED. LAUNCHING...\n', 'green', attrs = ['reverse']))
+                else:
+                    gc.typewriter(colored('\tINVALID PASSWORD. EXITING.\n', 'red'))
+            else:
+                gc.typewriter(colored('\tTARGET NOT FOUND. EXITING.\n', 'red'))
+
+
         elif self.category == 'MINER':
             gc.msg('Installing cryptominer...')
         elif self.category == 'CRACKER':
