@@ -514,8 +514,8 @@ def prompt(user):
                 file.lookup()
 
                 # get computer object
-                computer = Computer(id = comp_id)
-                computer.lookup()
+                comp = Computer(id = comp_id)
+                comp.lookup()
 
                 # get time remaining
                 process = Process(id = pr_id)
@@ -524,7 +524,7 @@ def prompt(user):
                 remaining = gc.hr_seconds(seconds)
 
                 # add to message box
-                property_str = 'on ' + computer.ip + ' (' + str(memory) + ' MB) '
+                property_str = 'on ' + comp.ip + ' (' + str(memory) + ' MB) '
                 property_str += 'with ' + remaining + ' remaining'
                 mb.add_property(file.name, property_str)
 
