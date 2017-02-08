@@ -39,5 +39,10 @@ class Database:
         response = self.cursor.fetchall()
         self.con.commit()
 
+    # get the ID of the last row inserted
+    def get_id(self):
+        return int(self.cursor.lastrowid)
+
+    # close the connection
     def close(self):
         self.con.close()
