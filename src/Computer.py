@@ -31,7 +31,7 @@ from termcolor import colored
 
 class Computer:
 
-    def __init__(self, owner_id = -1):
+    def __init__(self, owner_id = -1, id = -1):
         self.owner_id = owner_id
         self.ram = 512
         self.cpu = 512
@@ -43,7 +43,7 @@ class Computer:
         self.password = ''
         self.bank_id = None
         self.domain = None
-        self.id = -1
+        self.id = id
         self.last_login = gc.current_time()
         self.folder_count = 0
         self.file_count = 0
@@ -187,9 +187,7 @@ class Computer:
 
     # prints the log file for this computer
     def print_log_file(self):
-        print ('Root Dir Exists: ' + str(self.root_dir.exists))
         osdir = Directory('os', self.root_dir.id)
-        print ('OS Dir Exists: ' + str(osdir.exists))
         osdir.lookup()
         logfile = File('log.txt', osdir)
         logfile.lookup()

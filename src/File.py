@@ -21,16 +21,15 @@ from MessageBox import MessageBox
 
 class File:
 
-    def __init__(self, name, parent, content = None, f_type = 'txt', level = 1, size = 0):
+    def __init__(self, name, parent):
         self.name = name
         self.parent = parent
-        self.parent_id = parent.id
-        self.content = content
-        self.type = f_type
-        self.level = level
-        self.size = size
+        self.id = id
+        self.content = None
+        self.type = 'txt'
+        self.level = 1
+        self.size = 0
         self.exists = False
-        self.id = -1
         self.creation_time = gc.current_time()
         self.modified_time = self.creation_time
         self.category = None
@@ -44,18 +43,10 @@ class File:
     # gets information from database about this file if it exists
     def lookup(self):
         db = Database()
-        sql = ''
-        args = []
-
-        if self.id != -1:
-            sql = 'SELECT * FROM files WHERE id = %s'
-            args = [self.id]
-        else:
-            sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
-            args = [self.name, self.parent_id]
-
+        sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
+        args = [self.name, self.parent.id]
         result = db.get_query(sql, args)
-
+        db.close()
         if len(result) == 1: # file exists
             self.exists = True
             self.id = int(result[0][0])
@@ -74,8 +65,6 @@ class File:
                 self.size = len(self.name)
                 if self.content != None:
                     self.size += len(self.content)
-
-        db.close()
 
     # runs an executable program
     def run(self):
@@ -107,7 +96,7 @@ class File:
         # update modified timestamp
         self.modified_time = gc.current_time()
 
-        args = [self.name, self.parent_id, self.content, self.type,
+        args = [self.name, self.parent.id, self.content, self.type,
                 self.level, self.size, self.category, self.comment, self.memory, self.is_live]
 
         self.lookup()
