@@ -97,7 +97,8 @@ CREATE TABLE IF NOT EXISTS processes
 (
     id int(12) NOT NULL UNIQUE AUTO_INCREMENT,
     comp_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id), -- computer the process runs on
-    name VARCHAR(32) NOT NULL REFERENCES files(file_name), -- file which started the process
+    file_id INT(12) NOT NULL DEFAULT 0 REFERENCES files(id), -- file which started the process
+    user_id INT(12) NOT NULL DEFAULT 0 REFERENCES users(id), -- user who started the process
     started_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process was initiated
     finished_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process will be done
     memory INT(8) DEFAULT 0 REFERENCES files(memory),
