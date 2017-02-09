@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS files
     id INT(12) NOT NULL UNIQUE AUTO_INCREMENT,
     file_name VARCHAR(32) NOT NULL,
     parent_id INT(12) NOT NULL REFERENCES directories(id),
+    owner_id INT(12) NOT NULL REFERENCES users(id),
     content VARCHAR(4096) DEFAULT NULL,
     file_type VARCHAR(5) NOT NULL,
     file_level INT(2) NOT NULL,
@@ -99,8 +100,9 @@ CREATE TABLE IF NOT EXISTS processes
     comp_id INT(12) NOT NULL DEFAULT 0 REFERENCES computers(id), -- computer the process runs on
     file_id INT(12) NOT NULL DEFAULT 0 REFERENCES files(id), -- file which started the process
     user_id INT(12) NOT NULL DEFAULT 0 REFERENCES users(id), -- user who started the process
+    target_id INT(12) DEFAULT NULL REFERENCES computers(id), -- target computer if applicable
     started_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process was initiated
     finished_on TIMESTAMP NOT NULL DEFAULT now(), -- when the process will be done
-    memory INT(8) DEFAULT 0 REFERENCES files(memory),
+    memory INT(8) DEFAULT 0 REFERENCES files(memory), -- how much memory this process takes up
     PRIMARY KEY(id)
 );
