@@ -96,12 +96,14 @@ def prompt(user):
             mb.add_property('rn (rename) <obj> <name>', 'sets <obj>\'s name to <name>')
             mb.add_property('mv (move) <obj> <dir>', 'moves <obj> to directory <dir>')
             mb.add_property('info <obj>', 'shows detailed info about <obj>')
-            mb.add_property('processes (ps)', 'shows your running processes')
+            mb.add_property('processes (ps)', 'shows running processes with ID numbers')
+            mb.add_property('close (stop) <id>', 'finishes a running process')
             mb.add_heading('Networking')
             mb.add_property('ping <target>', 'sends an echo request to the IP or domain <target>')
             mb.add_property('ssh <target>', 'attempts to log into IP or domain <target>')
             mb.add_property('ul (upload) <path>', 'uploads the object at local path <path>')
             mb.add_property('dl (download) <obj>', 'downloads the object <obj> to ~/downloads')
+            mb.add_property('chip', 'changes your ip (can only be done once per day)')
             mb.display()
         elif base_cmd == 'chat':
             # switches to chat mode
@@ -112,6 +114,7 @@ def prompt(user):
         elif base_cmd in ['md', 'mkdir']:
             if len(cmds) > 1:
                 dir_name = cmds[1]
+                computer.check_space()
                 # check if name is valid
                 if not dir_name.isalnum():
                     gc.error('Directory names can only contain letters and numbers.')
@@ -123,13 +126,18 @@ def prompt(user):
                     d.lookup()
                     if d.exists:
                         gc.error('That directory already exists here.')
-                    elif False:
-                        # check if there is enough room on the disk
-                        pass
+                    # check if parent directory is read-only
+                    elif directory.read_only:
+                        gc.error('The current directory is marked as read-only.')
+                    # check if there is enough room on the disk
+                    elif computer.disk_free < gc.DIR_SIZE:
+                        gc.error('There is not enough free disk space to create a new directory.')
+                    # check if the nesting level is too deep
                     elif directory.nesting > gc.DIR_MAX_NEST:
-                        # check if the nesting level is too deep
                         gc.error('Sorry, directories can be nested more than ' + str(gc.DIR_MAX_NEST) + ' deep.')
-
+                    # check if the max number of directories exist already
+                    elif computer.get_dir_count() >= gc.DIR_MAX_COUNT:
+                        gc.error('Sorry, the filesystem will not support additional directories.')
                     else:
                         # create the directory
                         d.username = user.name
@@ -147,18 +155,26 @@ def prompt(user):
         elif base_cmd in ['mf', 'mkfile']:
             if len(cmds) > 1:
                 f_name = cmds[1] + '.txt'
+                computer.check_space()
                 # check if name is valid
                 if not cmds[1].isalnum():
                     gc.error('File names can only contain letters and numbers.')
                     gc.warning('Note that .txt will be automatically appended to your filename.')
+                # check if name is too long
                 elif len(f_name) > gc.FILE_MAX_LENGTH:
                     gc.error('File names can contain at most ' + str(gc.FILE_MAX_LENGTH) + 'characters.')
+                # check if parent is read-only
+                elif directory.read_only:
+                        gc.error('The current directory is marked as read-only.')
                 else:
                     # check if name is already taken
                     file = File(f_name, directory)
                     file.lookup()
                     if file.exists:
                         gc.error('That file already exists here.')
+                    # check if disk has enough room
+                    elif computer.disk_free < file.size:
+                        gc.error('There isn\'t enough room on the disk for this file.')
                     else:
                         file.save()
                         gc.success('File ' + f_name + ' created successfully.')
@@ -171,35 +187,34 @@ def prompt(user):
         # remove a directory
         elif base_cmd in ['rm', 'del']:
             if len(cmds) > 1:
-                obj_name = cmds[1]
-
-                # check if entered name matches a file
-                file = File(obj_name, directory)
-                file.lookup()
-                if file.exists:
-                    file.delete()
-                    gc.success('Deleted file ' + obj_name)
-                    if obj_name != 'log.txt':
-                        log_entry = user.handle + ' deleted file ' + obj_name
-                        user.computer.add_log_entry(log_entry)
-                elif obj_name == '~':
-                    gc.error('You cannot delete the home directory.')
-                elif obj_name == '.':
-                    gc.error('You cannot delete the directory you are currently in.')
-                else:
-                    # check if entered name matches a directory
-                    d = Directory(obj_name, directory.id)
-                    d.lookup()
-                    if d.exists:
-                        if gc.prompt_yn('Really delete directory ' + obj_name + '?'):
-                            d.delete()
-                            gc.success('Deleted directory ' + obj_name)
-                            log_entry = user.handle + ' deleted directory ' + obj_name
-                            computer.add_log_entry(log_entry)
-                        else:
-                            gc.warning('Directory ' + obj_name + ' was not deleted')
+                for obj_name in cmds[1:]:
+                    # check if entered name matches a file
+                    file = File(obj_name, directory)
+                    file.lookup()
+                    if file.exists:
+                        file.delete()
+                        gc.success('Deleted file ' + obj_name)
+                        if obj_name != 'log.txt':
+                            log_entry = user.handle + ' deleted file ' + obj_name
+                            user.computer.add_log_entry(log_entry)
+                    elif obj_name == '~':
+                        gc.error('You cannot delete the home directory.')
+                    elif obj_name == '.':
+                        gc.error('You cannot delete the directory you are currently in.')
                     else:
-                        gc.error('That object does not exist here.')
+                        # check if entered name matches a directory
+                        d = Directory(obj_name, directory.id)
+                        d.lookup()
+                        if d.exists:
+                            if gc.prompt_yn('Really delete directory ' + obj_name + '?'):
+                                d.delete()
+                                gc.success('Deleted directory ' + obj_name)
+                                log_entry = user.handle + ' deleted directory ' + obj_name
+                                computer.add_log_entry(log_entry)
+                            else:
+                                gc.warning('Directory ' + obj_name + ' was not deleted')
+                        else:
+                            gc.error('That object does not exist here.')
             else:
                 # show command usage
                 gc.msg('Enter rm [object] to permanently delete a file or directory.')
@@ -242,7 +257,9 @@ def prompt(user):
                 gc.msg('or cd ~ to go to the root directory.')
 
         elif base_cmd == 'edit':
-            if len(cmds) > 1:
+            if directory.read_only:
+                gc.error('You cannot edit files here because the directory is read-only.')
+            elif len(cmds) > 1:
                 f_name = cmds[1]
                 f = File(f_name, directory)
                 f.lookup()
@@ -279,6 +296,7 @@ def prompt(user):
 
         # show disk info
         elif base_cmd == 'disk':
+            computer.lookup()
             computer.print_disk_info()
             if gc.prompt_yn('List all disk contents?'):
                 computer.print_all_contents()
@@ -341,7 +359,6 @@ def prompt(user):
                 if target in ['127.0.0.1', 'localhost']:
                     gc.warning('You are already connected.')
                 else:
-                    time.sleep(1)
                     # attempt lookup via IP
                     c = Computer()
                     c.ip = target
@@ -358,7 +375,6 @@ def prompt(user):
                         correct = False
                         while attempts <= 3 and not correct:
                             password = raw_input('  Password: ')
-                            time.sleep(1)
                             if password == c.password:
                                 gc.success('Connected to ' + target + '.\n')
                                 c.show_login_banner()
@@ -370,10 +386,10 @@ def prompt(user):
                             else:
                                 gc.error('Invalid credentials. Attempt ' + str(attempts) + ' of 3.')
                                 computer.add_log_entry('root login failed')
+                                time.sleep(1)
                             attempts += 1
                     else:
                         gc.error('Unable to connect to ' + target + '.')
-
 
             else:
                 # show command usage
@@ -405,7 +421,7 @@ def prompt(user):
                     i = 0
                     latency = random.randint(10, 100) # simulate ping delay
                     while i < 3:
-                        time.sleep(1)
+                        time.sleep(0.5)
                         i += 1
                         if c1.exists or c2.exists:
                             ms = str(latency + random.randint(0, 10)) + ' ms'
@@ -424,7 +440,41 @@ def prompt(user):
 
         # downloads a file
         elif base_cmd in ['dl', 'download']:
-            pass
+            if len(cmds) > 1:
+                if computer != user.computer:
+                    for fname in cmds[1:]:
+                        file = File(fname, directory)
+                        file.lookup()
+                        if file.exists:
+                            user.computer.check_space()
+                            if file.size + gc.DIR_SIZE > user.computer.disk_free:
+                                gc.error('Your computer doesn\'t have enough free space to download this.')
+                            elif file.is_live:
+                                gc.error('You can\'t download a live program.')
+                            else:
+                                dl_dir = Directory('downloads', user.computer.root_dir.id)
+                                dl_dir.lookup()
+                                if not dl_dir.exists:
+                                    dl_dir.save()
+                                    dl_dir.lookup()
+                                newfile = File(file.name, dl_dir)
+                                newfile.owner_id = user.id
+                                newfile.content = file.content
+                                newfile.type = file.type
+                                newfile.size = file.size
+                                newfile.category = file.category
+                                newfile.comment = file.comment
+                                newfile.memory = file.memory
+                                newfile.save()
+                                gc.success('File ' + newfile.name + ' downloaded to ~/downloads.')
+
+                        else:
+                            gc.error('That file doesn\'t exist here.')
+                else:
+                    gc.warning('This file is already on your computer, so you can\'t download it.')
+            else:
+                # show comand usage
+                gc.msg('Download a file to your computer by typing dl [file].')
 
         # uploads a file
         elif base_cmd in ['ul', 'upload']:
@@ -433,11 +483,18 @@ def prompt(user):
         # change a property for a user's account
         elif base_cmd == 'set':
             if len(cmds) > 1:
-                pass
+                if cmds[1] == 'email':
+                    user.change_email()
+                elif cmds[1] == 'handle':
+                    user.change_handle()
+                elif cmds[1] == 'password':
+                    user.change_password()
+                elif cmds[1] == 'ip':
+                    gc.warning('Use the command chip to change your ip.')
             else:
                 # show command usage
                 gc.msg('This can be used to change settings for your account.')
-                gc.msg('Valid settings: email, handle')
+                gc.msg('Valid settings: email, handle, password')
 
         # validate an email address with a given token
         elif base_cmd == 'verify':
@@ -471,7 +528,7 @@ def prompt(user):
         # executes a program
         elif base_cmd == 'run':
             if len(cmds) > 1:
-                binfile = File(cmds[1], computer.root_dir)
+                binfile = File(cmds[1], directory)
                 binfile.lookup()
                 if binfile.exists:
                     user.run_program(binfile)
@@ -488,19 +545,25 @@ def prompt(user):
         # show running processes
         elif base_cmd in ['ps', 'processes']:
             mb = MessageBox()
+            mb.set_label_width(32)
             mb.set_title('Running processes for ' + user.handle + ':')
 
             db = Database()
             sql = 'SELECT * FROM processes WHERE user_id = %s'
             args = [user.id]
             results = db.get_query(sql, args)
+            i = 1
             for result in results:
                 pr_id = int(result[0])
                 comp_id = int(result[1])
                 file_id = int(result[2])
-                started_on = result[4]
-                finished_on = result[5]
-                memory = int(result[6])
+                user_id = int(result[3])
+                target_id = -1
+                if not result[4] == None:
+                    target_id = int(result[4])
+                started_on = result[5]
+                finished_on = result[6]
+                memory = int(result[7])
 
                 # get file object
                 sql = 'SELECT * FROM files WHERE id = %s'
@@ -518,18 +581,62 @@ def prompt(user):
                 comp.lookup()
 
                 # get time remaining
-                process = Process(id = pr_id)
+                process = Process(computer = user.computer, user = user, id = pr_id)
                 process.lookup()
                 seconds = process.get_time_remaining()
                 remaining = gc.hr_seconds(seconds)
 
                 # add to message box
-                property_str = 'on ' + comp.ip + ' (' + str(memory) + ' MB) '
-                property_str += 'with ' + remaining + ' remaining'
-                mb.add_property(file.name, property_str)
-
+                property_str = ''
+                if seconds > 0:
+                    property_str = 'on ' + comp.ip + ' (' + remaining + ' remaining)'
+                else:
+                    property_str = 'on ' + comp.ip + ' (COMPLETE)'
+                mb.add_property(str(i) + ': ' + file.name + ' (' + str(memory) + ' MB)', property_str)
+                i += 1
             db.close()
             mb.display()
+
+        # finish a process
+        elif base_cmd in ['stop', 'close', 'finish']:
+            if len(cmds) > 1:
+                try:
+                    pindex = int(cmds[1])
+                    db = Database()
+                    sql = 'SELECT * FROM processes WHERE user_id = %s'
+                    args = [user.id]
+                    results = db.get_query(sql, args)
+                    pr_result = results[pindex - 1]
+                    pr_id = int(pr_result[0])
+                    if len(pr_result) > 0 and pindex > 0:
+                        process = Process(computer = user.computer, user = user, id = pr_id)
+                        process.lookup()
+                        if process.exists:
+                            seconds = process.get_time_remaining()
+                            if seconds > 0:
+                                gc.warning('That process hasn\'t finished yet.')
+                                if gc.prompt_yn('  Close anyway?'):
+                                    process.stop()
+                                    gc.success('Process stopped.')
+                                else:
+                                    gc.warning('Process will continue running.')
+                            else:
+                                gc.success('Closing process #' + str(pindex) + '.')
+                                user.finish_process(process)
+                        else:
+                            gc.error('A problem occurred while checking the process.')
+                    else:
+                        gc.error('That process couldn\'t be found. Please enter the ID of a valid process.')
+                    db.close()
+                except Exception as e:
+                    gc.error('That process couldn\'t be found. Please enter the ID of a valid process.')
+            else:
+                # show command usage
+                gc.msg('Enter close <process_id> to finish a process.')
+                gc.msg('Enter processes to see a list of all active processes.')
+
+        elif base_cmd in ['res', 'resources']:
+            computer.show_resources()
 
         # exit the game (TODO: remove this for production)
         elif base_cmd in ['exit', 'quit']:
