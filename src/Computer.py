@@ -193,7 +193,10 @@ class Computer:
         osdir.lookup()
         logfile = File('log.txt', osdir)
         logfile.lookup()
-        logfile.print_contents()
+        if logfile.exists:
+            logfile.print_contents()
+        else:
+            gc.error('The log file has been deleted.')
 
     # adds an entry to the log, and creates it if it doesn't already exist
     def add_log_entry(self, text):
@@ -237,7 +240,10 @@ class Computer:
 
         # finally, add text to the logfile
         log_entry = '[' + gc.current_time() + '] ' + text + '\n'
-        new_content = log_content + log_entry
+        new_content = ''
+        if log_content != None:
+            new_content = log_content
+        new_content += log_entry
         while len(new_content) > gc.MAX_FILE_SIZE: # remove lines top as needed
             nl_index = new_content.index('\n') + 1 # find first newline character
             new_content = new_content[nl_index:]   # remove text up to first newline
