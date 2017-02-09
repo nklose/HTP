@@ -588,10 +588,15 @@ def prompt(user):
 
                 # add to message box
                 property_str = ''
-                if seconds > 0:
-                    property_str = 'on ' + comp.ip + ' (' + remaining + ' remaining)'
+                remaining_str = ' (' + remaining + ' remaining)'
+                if seconds <= 0:
+                    remaining_str = ' (COMPLETE)'
+
+                if process.target != None:
+                    property_str = 'against ' + process.target.ip + remaining_str
                 else:
-                    property_str = 'on ' + comp.ip + ' (COMPLETE)'
+                    property_str = 'on ' + comp.ip + remaining_str
+
                 mb.add_property(str(i) + ': ' + file.name + ' (' + str(memory) + ' MB)', property_str)
                 i += 1
             db.close()
