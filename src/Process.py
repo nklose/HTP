@@ -20,7 +20,6 @@
 import datetime
 
 from File import File
-from User import User
 from Computer import Computer
 from Database import Database
 from Directory import Directory
@@ -46,35 +45,33 @@ class Process:
         self.memory = 0
 
     def start(self):
-        # check if the computer has enough memory to start the process
-        self.computer.lookup()
-        self.file.lookup()
-        mem_free = self.computer.get_memory_free()
-        file_mem = self.file.memory
-
-        if file_mem <= mem_free:
-            # determine how long the process will take
-            seconds = 0
-            category = self.file.category
-            cpu_modifier = self.computer.cpu / 1024.0
-            # virus scans
-            if category == 'ANTIVIRUS':
-                seconds = AV_MULTIPLIER * self.file.level / (cpu_modifier)
-            # password cracking
-            elif category == 'CRACKER':
-                seconds = CR_MULTIPLIER * self.file.level * self.target.firewall.level / cpu_modifier
-            # virus installation
-            elif category in ['MINER', 'ADWARE', 'SPAMBOT']:
-                seconds = VIRUS_MULTIPLIER * self.file.level * self.target.firewall.level / cpu_modifier
-            else:
-                gc.error('An error occurred while trying to run the specified program.')
-
-            # set completion timestamp
-            self.end_time = gc.ts_to_string(gc.string_to_ts(self.start_time) + datetime.timedelta(seconds = seconds))
-            self.save()
-            self.exists = True
+    
+        # determine how long the process will take
+        seconds = 0
+        category = self.file.category
+        cpu_modifier = self.computer.cpu / 1024.0
+        # virus scans
+        if category == 'ANTIVIRUS':
+            seconds = AV_MULTIPLIER * self.file.level / (cpu_modifier)
+        # password cracking
+        elif category == 'CRACKER':
+            fw_level = 0.5 # for targets with no firewall
+            if self.target.firewall.level > 0:
+                fw_level = self.target.firewall.level
+            seconds = CR_MULTIPLIER * self.file.level * fw_level / cpu_modifier
+        # virus installation
+        elif category in ['MINER', 'ADWARE', 'SPAMBOT']:
+            fw_level = 0.25 # for targets with no firewall
+            if self.target.firewall.level > 0:
+                fw_level = self.target.firewall.level
+            seconds = VIRUS_MULTIPLIER * self.file.level * fw_level / cpu_modifier
         else:
-            gc.error('You have ' + str(free) + ' MB of memory free, but this requires ' + str(self.file.memory) + '.')
+            gc.error('An error occurred while trying to run the specified program.')
+
+        # set completion timestamp
+        self.end_time = gc.ts_to_string(gc.string_to_ts(self.start_time) + datetime.timedelta(seconds = seconds))
+        self.save()
+        self.exists = True
 
     # looks for an existing object in the database
     def lookup(self):
@@ -90,17 +87,16 @@ class Process:
                 comp_id = int(result[0][1])
                 file_id = int(result[0][2])
                 user_id = int(result[0][3])
-                self.start_time = gc.ts_to_string(result[0][4])
-                self.end_time = gc.ts_to_string(result[0][5])
-                self.memory = int(result[0][6])
+                target_id = -1
+                if not result[0][4] == None:
+                    target_id = int(result[0][4])
+                self.start_time = gc.ts_to_string(result[0][5])
+                self.end_time = gc.ts_to_string(result[0][6])
+                self.memory = int(result[0][7])
 
                 # lookup computer
                 self.computer = Computer(id = comp_id)
                 self.computer.lookup()
-
-                # lookup user
-                self.user = User(id = user_id)
-                self.user.lookup()
 
                 # lookup file
                 db = Database()
@@ -108,27 +104,39 @@ class Process:
                 args = [file_id]
                 result = db.get_query(sql, args)
                 if len(result) > 0:
-                    file_dir = Directory(int(result[0][2]))
+                    file_dir = Directory(id = int(result[0][2]))
                     file_dir.lookup()
                     file_name = result[0][1]
                     self.file = File(file_name, file_dir)
                     self.file.lookup()
+                    if not self.file.exists:
+                        gc.error('The process file doesn\'t exist.')
                 else:
                     gc.error('The file for this process couldn\'t be found.')
+
+                # lookup user
+                self.user.id = user_id
+                self.user.lookup()
+
+                # lookup target
+                if not target_id == -1:
+                    self.target = Computer(id = target_id)
+                    self.target.lookup()
 
     # saves into the database
     def save(self):
         self.memory = self.file.memory
         db = Database()
         sql = ''
-        args = [self.file.id, self.computer.id, self.start_time, self.end_time, self.memory]
+        args = [self.file.id, self.computer.id, self.user.id, self.target.id, self.start_time, 
+            self.end_time, self.memory]
         if self.exists:
             args.append(self.id)
-            sql = 'UPDATE processes SET file_id = %s, comp_id = %s, started_on = %s, '
-            sql += 'finished_on = %s, memory = %s WHERE id = %s'
+            sql = 'UPDATE processes SET file_id = %s, comp_id = %s, user_id = %s, target_id = %s, '
+            sql += 'started_on = %s, finished_on = %s, memory = %s WHERE id = %s'
         else:
-            sql = 'INSERT INTO processes (file_id, comp_id, started_on, finished_on, '
-            sql += 'memory) VALUES (%s, %s, %s, %s, %s)'
+            sql = 'INSERT INTO processes (file_id, comp_id, user_id, target_id, started_on, '
+            sql += 'finished_on, memory) VALUES (%s, %s, %s, %s, %s, %s, %s)'
         db.post_query(sql, args)
         self.id = db.get_id()
         self.exists = True

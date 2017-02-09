@@ -39,6 +39,7 @@ CMD_LOG_LENGTH = 100                 # number of commands per user to save
 MAX_FILE_SIZE = 4096                 # max characters allowed in a file
 DIR_MAX_LENGTH = 16                  # max chars for a directory name
 DIR_MAX_NEST = 6                     # directory nesting maximum
+DIR_MAX_COUNT = 16                   # maximum number of directories per computer
 DIR_SIZE = 32                        # size on disk one directory takes up
 FILE_MAX_LENGTH = 32                 # max length of a file name
 BOX_WIDTH = 80                       # width of text box in characters

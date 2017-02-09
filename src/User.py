@@ -22,6 +22,8 @@ import yagmail
 
 import GameController as gc
 
+from File import File
+from Process import Process
 from Database import Database
 from Computer import Computer
 from MessageBox import MessageBox
@@ -127,11 +129,17 @@ class User:
                 total_funds += int(response[i][0])
                 i += 1
 
+        # get process count
+        sql = 'SELECT * FROM processes WHERE user_id = %s'
+        args = [self.id]
+        num_processes = len(db.get_query(sql, args))
+
         # close database
         db.close()
 
         # display all info
         c = self.computer
+        c.get_memory_free()
         msg_box = MessageBox()
         msg_box.set_title('User Summary')
         # basic summary
@@ -140,7 +148,7 @@ class User:
         msg_box.add_property('RAM Free', str(c.get_memory_free()) + ' MB')
         msg_box.add_property('Disk Total', str(c.hdd) + ' GB')
         msg_box.add_property('Disk Free', gc.hr_bytes(c.disk_free))
-        msg_box.add_property('Process Count', '0')
+        msg_box.add_property('Process Count', str(num_processes))
         msg_box.hr()
         # security info
         msg_box.add_property('IP Address', c.ip)
@@ -403,39 +411,114 @@ class User:
 
     # runs an executable program as a specific user
     def run_program(self, file):
-        if file.category == 'FIREWALL':
+
+        # check if the computer has enough memory to start the process
+        self.computer.lookup()
+        file.lookup()
+        mem_free = self.computer.get_memory_free()
+        file_mem = file.memory
+
+        if file_mem > mem_free:
+            gc.error('You have only ' + str(mem_free) + ' MB of RAM free.')
+            gc.error('This program requires ' + str(file_mem) + ' MB. Free up memory and try again.')  
+        
+        # firewalls
+        elif file.category == 'FIREWALL':
             gc.warning('Your strongest firewall is automatically running in the background.')
+        
+        # antivirus scans
         elif file.category == 'ANTIVIRUS':
             gc.msg('Running virus scan with ' + self.name + '...')
-        elif file.category == 'ADWARE':
-            gc.msg('Installing adware bot...')
-        elif file.category == 'SPAMBOT':
+
+        # virus installations
+        elif file.category in ['ADWARE', 'SPAMBOT', 'MINER']:
             # get target IP
-            text = colored('\n\tINITIATING ', 'green')
+            text = colored('\n\tINITIATING ' + file.category + ' ', 'green')
             text += colored(file.name, 'yellow')
             text += colored('\n\trun://H4CK/T3H/PL4N37/', 'magenta')
             gc.typewriter(text)
             target_ip = raw_input(colored('\tENTER TARGET IP:', 'red', attrs=['bold', 'reverse']) + ' ')
             target_pw = raw_input(colored('\tENTER TARGET PW:', 'yellow', attrs=['bold', 'reverse']) + ' ')
 
-            db = Database()
-            sql = 'SELECT * FROM computers WHERE ip = %s'
-            args = [target_ip]
-            response = db.get_query(sql, args)
-            db.close()
             # check target
-            if len(response) > 0:
-                if response[0][2] == target_pw:
-                    gc.typewriter(colored('\tTARGET ACQUIRED. LAUNCHING...\n', 'green', attrs = ['reverse']))
+            target = Computer(ip = target_ip)
+            target.lookup()
+            if target.exists:
+                # check if user has already installed this type of virus on target
+                already_installed = False
+                for t_file in target.get_all_files():
+                    if t_file.category == file.category and t_file.is_live and t_file.owner_id == self.id:
+                        can_install = True
+
+                # check if user already has an installation process for the same target and virus type
+                already_installing = False
+                db = Database()
+                sql = 'SELECT * FROM processes INNER JOIN files ON processes.file_id = files.id '
+                sql += 'WHERE category = %s AND user_id = %s AND target_id = %s'
+                args = [file.category, self.id, target.id]
+                if len(db.get_query(sql, args)) > 0:
+                    already_installing = True
+                db.close()
+
+                if already_installed:
+                    info_str = '\n\tA ' + file.category + ' IS ALREADY RUNNING ON TARGET. EXITING.\n'
+                    gc.typewriter(colored(info_str, 'red'))
+                elif already_installing:
+                    info_str = '\n\tINSTALLATION OF A ' + file.category + ' IS ALREADY IN PROGRESS ON TARGET. EXITING.\n'
+                    gc.typewriter(colored(info_str, 'red'))
+                # check if target has enough memory to run the virus
+                elif target.get_memory_free() < file.memory:
+                    gc.typewriter(colored('\n\tNOT ENOUGH FREE MEMORY ON TARGET. EXITING.\n','red'))
+                # check if the password is correct
+                elif target.password == target_pw:
+                    # start file installation process
+                    p = Process(file, self.computer, self, target)
+                    gc.typewriter(colored('\n\tTARGET ACQUIRED. LAUNCHING...\n', 'green', attrs = ['reverse']))
+                    p.start()
+                    p.save()
                 else:
-                    gc.typewriter(colored('\tINVALID PASSWORD. EXITING.\n', 'red'))
+                    gc.typewriter(colored('\n\tINVALID PASSWORD. EXITING.\n', 'red'))
             else:
-                gc.typewriter(colored('\tTARGET NOT FOUND. EXITING.\n', 'red'))
+                gc.typewriter(colored('\n\tTARGET NOT FOUND. EXITING.\n', 'red'))
 
-
-        elif file.category == 'MINER':
-            gc.msg('Installing cryptominer...')
+        # password crackers
         elif file.category == 'CRACKER':
             gc.msg('Attempting to crack password...')
+        
+        # non-binary files
         else:
             gc.error('That file isn\'t executable and can\'t be run.')
+
+    # concludes a running process without time remaining
+    def finish_process(self, process):
+        if process.file.category in ['SPAMBOT', 'ADWARE', 'MINER']:
+            # get target directory
+            install_dir = process.target.root_dir
+
+            # create virus file
+            virus = File(gc.gen_virus_name(), install_dir)
+            virus.is_live = True
+            virus.owner_id = self.id
+            virus.type = process.file.type
+            virus.category = process.file.category
+            virus.size = process.file.size
+            virus.memory = process.file.memory
+            virus.comment = process.file.comment
+            virus.level = process.file.level
+            virus.save()
+            process.stop()
+            gc.success(process.file.name + ' is now running on ' + process.target.ip + '.')
+
+    # changes the email associated with a user's account
+    def change_email(self):
+        pass
+
+    # changes a user's handle
+    def change_handle(self):
+        pass
+
+    # changes a user's account password
+    def change_password(self):
+        gc.msg('Note that you are changing your actual HTP account password.')
+        gc.msg('If you want to change your computer\'s root password, use the command chpw.')
+        pass
