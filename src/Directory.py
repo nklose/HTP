@@ -66,6 +66,7 @@ class Directory:
                 self.comp_id = int(result[0][3])
                 self.creation_time = gc.ts_to_string(result[0][4])
                 self.modified_time = gc.ts_to_string(result[0][5])
+                self.read_only = bool(result[0][6])
 
                 # get parent's name
                 sql = 'SELECT * FROM directories WHERE id = %s'

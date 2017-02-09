@@ -26,6 +26,7 @@ class File:
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
+        self.owner_id = -1
         self.id = -1
         self.content = None
         self.type = 'txt'
@@ -52,17 +53,18 @@ class File:
         if len(result) == 1: # file exists
             self.exists = True
             self.id = int(result[0][0])
-            self.content = result[0][3]
-            self.type = result[0][4]
-            self.level = int(result[0][5])
-            self.size = int(result[0][6])
-            self.creation_time = gc.ts_to_string(result[0][7])
-            self.modified_time = gc.ts_to_string(result[0][8])
-            self.category = result[0][9]
-            self.comment = result[0][10]
-            if result[0][11] != None:
-                self.memory = int(result[0][11])
-            self.is_live = bool(result[0][12])
+            self.owner_id = int(result[0][3])
+            self.content = result[0][4]
+            self.type = result[0][5]
+            self.level = int(result[0][6])
+            self.size = int(result[0][7])
+            self.creation_time = gc.ts_to_string(result[0][8])
+            self.modified_time = gc.ts_to_string(result[0][9])
+            self.category = result[0][10]
+            self.comment = result[0][11]
+            if result[0][12] != None:
+                self.memory = int(result[0][12])
+            self.is_live = bool(result[0][13])
             if self.type == 'txt':
                 self.size = len(self.name)
                 if self.content != None:
@@ -81,16 +83,16 @@ class File:
         # update modified timestamp
         self.modified_time = gc.current_time()
 
-        args = [self.name, self.parent.id, self.content, self.type,
+        args = [self.name, self.parent.id, self.owner_id, self.content, self.type,
                 self.level, self.size, self.category, self.comment, self.memory, self.is_live]
 
         self.lookup()
         if not self.exists:
-            sql = 'INSERT INTO files (file_name, parent_id, content, file_type, '
+            sql = 'INSERT INTO files (file_name, parent_id, owner_id, content, file_type, '
             sql += 'file_level, file_size, category, comment, memory, modified_time, is_live) '
-            sql += 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s)'
+            sql += 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s)'
         else:
-            sql = 'UPDATE files SET file_name = %s, parent_id = %s, content = %s, '
+            sql = 'UPDATE files SET file_name = %s, parent_id = %s, owner_id = %s, content = %s, '
             sql += ' file_type = %s, file_level = %s, file_size = %s, modified_time = now(), category = %s, '
             sql += 'comment = %s, memory = %s, is_live = %s WHERE id = %s'
             args.append(self.id)
@@ -203,9 +205,3 @@ class File:
     # returns True only if this file is the OS log file for its computer
     def is_log_file(self):
         return self.name == 'log.txt' and self.parent.name == 'os' and self.parent.nesting == 2
-
-    # activates a virus on behalf of a specified user
-    def activate(self, user_id):
-        self.name = gc.gen_virus_name()
-        self.is_live = True
-        self.content = 'OWNER ' + str(user_id)
