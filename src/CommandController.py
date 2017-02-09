@@ -191,7 +191,9 @@ def prompt(user):
                     # check if entered name matches a file
                     file = File(obj_name, directory)
                     file.lookup()
-                    if file.exists:
+                    if file.is_live and not file.owner_id == user.id:
+                        gc.warning('You don\'t have permission to delete that file.')
+                    elif file.exists:
                         file.delete()
                         gc.success('Deleted file ' + obj_name)
                         if obj_name != 'log.txt':

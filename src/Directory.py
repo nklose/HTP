@@ -156,13 +156,13 @@ class Directory:
             subdir_list += subdir.name + ' '
         return subdir_list
 
-    # returns files in this directory
+    # returns files in this directory (excluding active viruses)
     def get_files(self):
         file_list = ''
         for file in self.files:
-            if file.type == 'bin':
+            if file.type == 'bin' and not file.is_live:
                 file_list += colored(file.name, 'green') + ' '
-            else:
+            elif not file.is_live:
                 file_list += file.name + ' '
         return file_list
 
