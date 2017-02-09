@@ -157,13 +157,13 @@ class Computer:
                 for file in f_result:
                     self.file_count += 1
                     f_size = 0
-                    f_type = file[4]
+                    f_type = file[5]
                     if f_type == 'txt': # for text files, size is length of name and content
                         f_size = len(file[1])
-                        if file[3] != None:
-                            f_size += len(file[3])
+                        if file[4] != None:
+                            f_size += len(file[4])
                     else:
-                        f_size = int(file[6])
+                        f_size = int(file[7])
 
                     total_bytes += f_size
             self.disk_free = self.hdd * 1024 ** 3 - int(total_bytes)
@@ -226,17 +226,17 @@ class Computer:
         result = db.get_query(sql, args)
         if len(result) == 0:
             # create the logfile
-            sql = 'INSERT INTO files (file_name, parent_id, content, file_type, file_level, file_size) '
-            sql += 'VALUES (%s, %s, %s, %s, %s, %s)'
+            sql = 'INSERT INTO files (file_name, parent_id, owner_id, content, file_type, file_level, file_size) '
+            sql += 'VALUES (%s, %s, %s, %s, %s, %s, %s)'
             create_entry = '[' + gc.current_time() + '] LOG FILE CREATED\n'
-            args = ['log.txt', sys_dir_id, create_entry, 'txt', 1, len(create_entry)]
+            args = ['log.txt', sys_dir_id, self.owner_id, create_entry, 'txt', 1, len(create_entry)]
             db.post_query(sql, args)
 
         # get the ID of the logfile
         sql = 'SELECT * FROM files WHERE file_name = %s AND parent_id = %s'
         args = ['log.txt', sys_dir_id]
         log_id = int(db.get_query(sql, args)[0][0])
-        log_content = db.get_query(sql, args)[0][3]
+        log_content = db.get_query(sql, args)[0][4]
 
         # finally, add text to the logfile
         log_entry = '[' + gc.current_time() + '] ' + text + '\n'
@@ -332,18 +332,51 @@ class Computer:
     # calculates how much memory is available for new processes
     def get_memory_free(self):
         free = self.ram
+        
         # check OS memory
         free -= gc.OS_MEMORY
+        
         # check memory used by firewall
         if self.firewall.memory != None:
             free -= self.firewall.memory
+        
         # add process memory
         db = Database()
         sql = 'SELECT * FROM processes WHERE user_id = %s'
         args = [self.owner_id]
         results = db.get_query(sql, args)
         for result in results:
-            free -= int(result[6])
+            free -= int(result[7])
+    
+        # add virus memory
+        sql = 'SELECT * FROM files INNER JOIN directories ON files.parent_id = directories.id '
+        sql += 'WHERE category IN (\'SPAMBOT\', \'MINER\', \'ADWARE\') AND is_live '
+        sql += 'AND computer_id = %s'
+        args = [self.id]
+        results = db.get_query(sql, args)
+        for result in results:
+            free -= int(result[12])
         db.close()
         return free
 
+    # returns the number of directories that reside on this computer
+    def get_dir_count(self):
+        db = Database()
+        sql = 'SELECT COUNT(*) FROM directories WHERE computer_id = %s'
+        args = [self.id]
+        result = db.get_query(sql, args)
+        db.close()
+        return int(result[0][0])
+
+    # shows resource statistics for this computer
+    def show_resources(self):
+        self.check_space()
+        mb = MessageBox('Resources for ' + self.ip)
+        mb.add_property('Total RAM', str(self.ram) + ' MB')
+        mb.add_property('Free RAM', str(self.get_memory_free()) + ' MB')
+        mb.add_property('Total CPU', str(self.cpu) + ' MHz')
+        mb.add_property('Total Disk', str(self.hdd) + ' GB')
+        mb.add_property('Free Disk', gc.hr_bytes(self.disk_free))
+        if self.domain != None:
+            mb.add_property('Domain Name', self.domain)
+        mb.display()
