@@ -286,7 +286,29 @@ def prompt(user):
 
         # moves an object to a new directory
         elif base_cmd in ['mv', 'move']:
-            pass
+            if len(cmds) > 2:
+                fname = cmds[1]
+                dir_name = cmds[2]
+                file = File(fname, directory)
+                file.lookup()
+                if file.exists:
+                    new_dir = None
+                    if dir_name == '..':
+                        new_dir = Directory(id = directory.parent_id)
+                    else:
+                        new_dir = Directory(dir_name, directory.id)
+                    new_dir.lookup()
+                    if new_dir.exists:
+                        file.parent = new_dir
+                        file.save()
+                        gc.success('File moved successfully.')
+                    else:
+                        gc.error('That directory doesn\'t exist here.')
+                else:
+                    gc.error('That file doesn\'t exist here.')
+            else:
+                # show command usage
+                gc.msg('Enter mv [file] [folder] to move a file to a new folder.')
 
         # renames an object
         elif base_cmd in ['rn', 'rename']:

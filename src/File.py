@@ -105,9 +105,6 @@ class File:
     def rename(self, new_name):
         pass
 
-    def move(self, new_dir_id):
-        pass
-
     def copy(self, dest_id):
         pass
 
