@@ -118,6 +118,10 @@ def check_hash(password, hashed_pw):
     hashed_pw, salt = hashed_pw.split(':')
     return hashed_pw == hashlib.sha256(salt.encode() + password.encode()).hexdigest()
 
+# Prompts the user for text input
+def prompt(message):
+    return raw_input(colored('  ' + message + ': ', 'cyan')).lower()
+
 # Prompts the user with a yes or no question
 def prompt_yn(message, default = 'y'):
     yn_str = ''

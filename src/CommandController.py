@@ -35,7 +35,7 @@ from ChatSession import ChatSession
 
 # Prompt for a numeric input
 def prompt_num():
-    return raw_input('\n# ')
+    return gc.prompt('#')
 
 # Prompt the user for input and respond accordingly.
 def prompt(user):
@@ -398,7 +398,7 @@ def prompt(user):
                         attempts = 1
                         correct = False
                         while attempts <= 3 and not correct:
-                            password = raw_input('  Password: ')
+                            password = gc.prompt('Password')
                             if password == c.password:
                                 gc.success('Connected to ' + target + '.\n')
                                 c.show_login_banner()

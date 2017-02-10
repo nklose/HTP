@@ -201,7 +201,7 @@ class User:
         gc.hr()
 
         while not valid_user:
-            self.name = raw_input('Desired Username: ')
+            self.name = gc.prompt('Desired Username')
 
             # name cannot be blank
             if self.name == '':
@@ -246,7 +246,7 @@ class User:
         gc.msg('You may optionally enter an email address which will enable password resets.')
         gc.msg('If you leave this blank, you will not be able to recover your account if you forget your password.')
         while not email_set:
-            self.email = raw_input('Email Address: ')
+            self.email = gc.prompt('Email Address')
             if self.email == '':
                 gc.warning('You have opted not to attach an email address to your account.')
                 email_set = True
@@ -364,7 +364,7 @@ class User:
     def reset_password(self):
         db = Database()
         gc.msg('Beginning the password reset process...')
-        self.name = raw_input('  Please enter your username: ')
+        self.name = gc.prompt('Please enter your username')
         self.lookup()
         # check if the user is registered
         if self.exists:
@@ -383,7 +383,7 @@ class User:
                 self.confirm_email()
                 self.save()
             else:
-                token = raw_input('  Please enter your reset token: ')
+                token = gc.prompt('Please enter your reset token')
                 if token == self.token:
                     gc.msg('You can now set a password for your account.')
                     valid_password = False
@@ -420,12 +420,12 @@ class User:
 
         if file_mem > mem_free:
             gc.error('You have only ' + str(mem_free) + ' MB of RAM free.')
-            gc.error('This program requires ' + str(file_mem) + ' MB. Free up memory and try again.')  
-        
+            gc.error('This program requires ' + str(file_mem) + ' MB. Free up memory and try again.')
+
         # firewalls
         elif file.category == 'FIREWALL':
             gc.warning('Your strongest firewall is automatically running in the background.')
-        
+
         # antivirus scans
         elif file.category == 'ANTIVIRUS':
             gc.msg('Running virus scan with ' + self.name + '...')
@@ -484,7 +484,7 @@ class User:
         # password crackers
         elif file.category == 'CRACKER':
             gc.msg('Attempting to crack password...')
-        
+
         # non-binary files
         else:
             gc.error('That file isn\'t executable and can\'t be run.')

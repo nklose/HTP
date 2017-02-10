@@ -149,7 +149,7 @@ class File:
             # check for long file
             if self.size > gc.LONG_FILE_CUTOFF:
                 gc.warning(self.name + ' is quite big (' + gc.hr_large(self.size) + ' bytes).')
-                confirm = raw_input('  Open the file anyway? (Y/N): ')
+                confirm = gc.prompt_yn('Open the file anyway?')
                 if confirm.lower() == 'y':
                     mb.display()
                 else:
