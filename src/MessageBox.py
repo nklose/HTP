@@ -87,6 +87,7 @@ class MessageBox:
     def add_long_text(self, text):
         wrapper = textwrap.TextWrapper()
         wrapper.width = self.width - 4
+        i = 0
         for line in wrapper.wrap(text):
             if len(line) == 0:
                 self.blank_line()
@@ -101,8 +102,23 @@ class MessageBox:
                 # add the line
                 bordered_line = colored(u'\u2502 ', self.border_color)
                 bordered_line += colored(line + spaces, self.text_color)
-                bordered_line += colored(u' \u2502', self.border_color)
+                bordered_line += colored(' ' + u'\u2502', self.border_color)
                 self.text.append(bordered_line)
+
+    # adds a line which may contain color tags
+    def add_line(self, text, tags = 0):
+        line = colored(u'\u2502 ', self.border_color)
+        line += text
+        # get filler spaces
+        spaces = ''
+        i = self.width - len(line) + 7 + tags * 9
+        while i > 0:
+            spaces += ' '
+            i -= 1
+        line += spaces
+        line += colored(' ' + u'\u2502', self.border_color)
+
+        self.text.append(line)
 
     # adds a text file to the box
     def add_file(self, text):

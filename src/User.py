@@ -348,6 +348,7 @@ class User:
         self.save()
         log_entry = 'new session for ' + self.handle + ' [' + self.computer.ip + ']'
         self.computer.add_log_entry(log_entry)
+        self.increment_stat('login_count')
 
     # returns the home directory of the user
     def get_home_dir(self):
@@ -429,6 +430,7 @@ class User:
         # antivirus scans
         elif file.category == 'ANTIVIRUS':
             gc.msg('Running virus scan with ' + self.name + '...')
+            self.increment_stat('av_count')
 
         # virus installations
         elif file.category in ['ADWARE', 'SPAMBOT', 'MINER']:
@@ -484,6 +486,7 @@ class User:
         # password crackers
         elif file.category == 'CRACKER':
             gc.msg('Attempting to crack password...')
+            self.increment_stat('cr_count')
 
         # non-binary files
         else:
@@ -508,6 +511,7 @@ class User:
             virus.save()
             process.stop()
             gc.success(process.file.name + ' is now running on ' + process.target.ip + '.')
+            self.increment_stat('virus_count')
 
     # changes the email associated with a user's account
     def change_email(self):
@@ -522,3 +526,101 @@ class User:
         gc.msg('Note that you are changing your actual HTP account password.')
         gc.msg('If you want to change your computer\'s root password, use the command chpw.')
         pass
+
+    # increments a user statistic by 1
+    def increment_stat(self, stat_name):
+        db = Database()
+        sql = 'SELECT * FROM user_stats WHERE id = %s'
+        args = [self.id]
+        result = db.get_query(sql, args)
+        sql = ''
+        args = [self.id]
+
+        # create user entry if it doesn't exist
+        if len(result) == 0:
+            sql = 'INSERT into user_stats (id) VALUES (%s)'
+            db.post_query(sql, args)
+
+        # increment the appropriate stat
+        if stat_name == 'ssh_count':
+            sql = 'UPDATE user_stats SET ssh_count = ssh_count + 1 WHERE id = %s'
+            db.post_query(sql, args)
+        elif stat_name == 'cr_count':
+            sql = 'UPDATE user_stats SET cr_count = cr_count + 1 WHERE id = %s'
+            db.post_query(sql, args)
+        elif stat_name == 'virus_count':
+            sql = 'UPDATE user_stats SET virus_count = virus_count + 1 WHERE id = %s'
+            db.post_query(sql, args)
+        elif stat_name == 'av_count':
+            sql = 'UPDATE user_stats SET av_count = av_count + 1 WHERE id = %s'
+            db.post_query(sql, args)
+        elif stat_name == 'login_count':
+            sql = 'UPDATE user_stats SET login_count = login_count + 1 WHERE id = %s'
+            db.post_query(sql, args)
+        elif stat_name == 'files_edited':
+            sql = 'UPDATE user_stats SET files_edited = files_edited + 1 WHERE id = %s'
+            db.post_query(sql, args)
+        else:
+            gc.error(stat_name + ' is not a valid stat.')
+
+        db.close()
+
+    # displays user stats
+    def show_stats(self):
+        db = Database()
+        args = [self.id]
+
+        # get user stats
+        sql =  'SELECT * FROM user_stats WHERE id = %s'
+        result = db.get_query(sql, args)
+        ssh_count = result[0][1]
+        cr_count = result[0][2]
+        virus_count = result[0][3]
+        av_count = result[0][4]
+        login_count = result[0][5]
+        files_edited = result[0][6]
+
+        # get money stats
+        sql = 'SELECT * FROM bank_accounts WHERE owner_id = %s'
+        results = db.get_query(sql, args)
+        total_money = 0
+        for account in results:
+            total_money += int(account[4])
+
+        # determine cracker ranking
+        sql = 'SELECT COUNT(*) FROM user_stats WHERE cr_count > %s'
+        args = [cr_count]
+        cr_rank = db.get_query(sql, args)[0][0] + 1
+
+        # determine viruses ranking
+        sql = 'SELECT COUNT(*) FROM user_stats WHERE virus_count > %s'
+        args = [virus_count]
+        virus_rank = db.get_query(sql, args)[0][0] + 1
+
+        # determine money ranking
+        sql = ''' SELECT COUNT(*) FROM (SELECT SUM(funds) AS total_funds
+            FROM bank_accounts GROUP BY owner_id) AS total_funds
+            WHERE total_funds > %s'''
+        args = [total_money]
+        money_rank = db.get_query(sql, args)[0][0] + 1
+
+        db.close()
+
+        # display stats
+        mb = MessageBox('User Statistics')
+        mb.add_heading('Ranked Stats')
+        cr_str = 'You have cracked ' + colored(str(cr_count), 'cyan') + ' passwords '
+        cr_str += '(ranked ' + colored('#' + str(cr_rank), 'yellow') + ' in the world).'
+        mb.add_line(cr_str, 2)
+        virus_str = 'You have installed ' + colored(str(virus_count), 'cyan') + ' viruses '
+        virus_str += '(ranked ' + colored('#' + str(virus_rank), 'yellow') + ' in the world).'
+        mb.add_line(virus_str, 2)
+        money_str = 'You own ' + colored('$' + str(total_money), 'cyan')
+        money_str += ' (ranked ' + colored('#' + str(money_rank), 'yellow') + ' in the world).'
+        mb.add_line(money_str, 2)
+        mb.add_heading('Misc. Stats')
+        mb.add_property('SSH Logins', str(ssh_count))
+        mb.add_property('AV Scans Run', str(av_count))
+        mb.add_property('Game Logins', str(login_count))
+        mb.add_property('Files Edited', str(files_edited))
+        mb.display()

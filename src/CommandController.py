@@ -35,7 +35,7 @@ from ChatSession import ChatSession
 
 # Prompt for a numeric input
 def prompt_num():
-    return gc.prompt('#')
+    return raw_input('\n#: ')
 
 # Prompt the user for input and respond accordingly.
 def prompt(user):
@@ -271,6 +271,7 @@ def prompt(user):
                     if gc.prompt_yn('Do you want to save your changes to the file?'):
                         f.save()
                         gc.success('File saved successfully.')
+                        user.increment_stat('files_edited')
                         if not f.is_log_file():
                             log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
                             computer.add_log_entry(log_entry)
@@ -407,6 +408,7 @@ def prompt(user):
                                 directory = c.root_dir
                                 log_entry = 'new remote session for ' + user.handle + ' [' + user.computer.ip + ']'
                                 computer.add_log_entry(log_entry)
+                                user.increment_stat('ssh_count')
                             else:
                                 gc.error('Invalid credentials. Attempt ' + str(attempts) + ' of 3.')
                                 computer.add_log_entry('root login failed')
@@ -666,6 +668,9 @@ def prompt(user):
 
         elif base_cmd in ['res', 'resources']:
             computer.show_resources()
+
+        elif base_cmd == 'stats':
+            user.show_stats()
 
         # exit the game (TODO: remove this for production)
         elif base_cmd in ['exit', 'quit']:

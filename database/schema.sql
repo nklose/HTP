@@ -106,3 +106,15 @@ CREATE TABLE IF NOT EXISTS processes
     memory INT(8) DEFAULT 0 REFERENCES files(memory), -- how much memory this process takes up
     PRIMARY KEY(id)
 );
+
+CREATE TABLE IF NOT EXISTS user_stats
+(
+    id int(12) NOT NULL REFERENCES users(id),
+    ssh_count int(12), -- number of SSH logins
+    cr_count int(12), -- number of passwords cracked
+    virus_count int(12), -- number of virus installations
+    av_count int(12), -- number of antivirus scans run
+    login_count int(12), -- number of game logins
+    files_edited int(12), -- number of file edits
+    PRIMARY KEY(id)
+);
