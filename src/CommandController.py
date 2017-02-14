@@ -223,35 +223,39 @@ def prompt(user):
 
         # show objects in current directory
         elif base_cmd in ['ls', 'dir']:
-            directory.print_contents()
+            if len(cmds) > 1:
+                ls_dir = Directory()
+            else:
+                directory.print_contents()
 
         # change directory
         elif base_cmd == 'cd':
             if len(cmds) > 1:
-                new_dir = Directory()
-                # get parent directory if user entered 'cd ..'
-                if cmds[1] == '..':
-                    new_dir.id = directory.parent_id
-                    new_dir.lookup()
-                    if directory.name == '~':
-                        gc.error('You are already in the top directory.')
-                    elif new_dir.exists:
-                        directory = new_dir
-                    else:
-                        gc.report(1)
-                elif cmds[1] == '~':
-                    directory = user.get_home_dir()
-                else:
-                    new_dir.name = cmds[1]
-                    new_dir.parent_id = directory.id
-                    if not new_dir.name.isalnum():
-                        gc.error('Directories can only contain letters and numbers.')
-                    else:
+                for d in cmds[1].split('/'):
+                    new_dir = Directory()
+                    # get parent directory if user entered 'cd ..'
+                    if d == '..':
+                        new_dir.id = directory.parent_id
                         new_dir.lookup()
-                        if new_dir.exists:
+                        if directory.name == '~':
+                            gc.error('You are already in the top directory.')
+                        elif new_dir.exists:
                             directory = new_dir
                         else:
-                            gc.error('That directory doesn\'t exist.')
+                            gc.report(1)
+                    elif d == '~':
+                        directory = user.get_home_dir()
+                    else:
+                        new_dir.name = d
+                        new_dir.parent_id = directory.id
+                        if not new_dir.name.isalnum():
+                            gc.error('Directories can only contain letters and numbers.')
+                        else:
+                            new_dir.lookup()
+                            if new_dir.exists:
+                                directory = new_dir
+                            else:
+                                gc.error('That directory doesn\'t exist.')
             else:
                 # show command usage
                 gc.msg('Enter cd [dir] to change to a folder named [dir].')
@@ -259,28 +263,45 @@ def prompt(user):
                 gc.msg('or cd ~ to go to the root directory.')
 
         elif base_cmd == 'edit':
-            if directory.read_only:
-                gc.error('You cannot edit files here because the directory is read-only.')
-            elif len(cmds) > 1:
-                f_name = cmds[1]
-                f = File(f_name, directory)
-                f.lookup()
-                if f.exists:
-                    # edit file in text editor
-                    TextEditor(f)
-                    if gc.prompt_yn('Do you want to save your changes to the file?'):
-                        f.save()
-                        gc.success('File saved successfully.')
-                        user.increment_stat('files_edited')
-                        if not f.is_log_file():
-                            log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
-                            computer.add_log_entry(log_entry)
+            if len(cmds) > 1:
+                objects = cmds[1].split('/')    # entered filepath
+                dirs = objects[:-1]             # list of directories to navigate through
+                f_name = objects[-1]            # name of the file to edit
 
+                current_dir = directory
+
+                # navigate to the target file's parent directory
+                for d in dirs:
+                    if d == '..':
+                        # move up one level
+                        current_dir = Directory(id = current_dir.parent_id)
                     else:
-                        gc.warning('File not saved.')
+                        # move to a subdirectory
+                        current_dir = Directory(d, current_dir.id)
+                    current_dir.lookup()
+
+                # edit the file
+                if current_dir.read_only:
+                    gc.error('The file you specified is in a read-only directory and cannot be edited.')
+                elif current_dir.exists:
+                    f = File(f_name, current_dir)
+                    f.lookup()
+                    if f.exists:
+                        TextEditor(f)
+                        if gc.prompt_yn('Do you want to save your changes to the file?'):
+                            f.save()
+                            gc.success('File saved successfully.')
+                            user.increment_stat('files_edited')
+                            if not f.is_log_file():
+                                log_entry = user.handle + ' edited file ' + f.parent.fullpath + '/' + f.name
+                                computer.add_log_entry(log_entry)
+                        else:
+                            gc.warning('File not saved.')
+                    else:
+                        gc.error('That file doesn\'t exist.')
                 else:
-                    gc.error('That file doesn\'t exist here.')
-                    gc.warning('If the file is new, please create it first with \'mf\'.')
+                    gc.error('You entered an invalid directory path.')
+
             else:
                 # show command usage
                 gc.msg('Enter edit [file] to start editing a text file.')
