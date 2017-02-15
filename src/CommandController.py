@@ -15,6 +15,7 @@
 import os
 import re
 import time
+import string
 import atexit
 import random
 import datetime
@@ -224,67 +225,33 @@ def prompt(user):
         # show objects in current directory
         elif base_cmd in ['ls', 'dir']:
             if len(cmds) > 1:
-                ls_dir = Directory()
+                ls_dir = directory.navigate(cmds[1])
+                if not ls_dir.id == directory.id:
+                    ls_dir.print_contents()
             else:
                 directory.print_contents()
 
         # change directory
         elif base_cmd == 'cd':
             if len(cmds) > 1:
-                for d in cmds[1].split('/'):
-                    new_dir = Directory()
-                    # get parent directory if user entered 'cd ..'
-                    if d == '..':
-                        new_dir.id = directory.parent_id
-                        new_dir.lookup()
-                        if directory.name == '~':
-                            gc.error('You are already in the top directory.')
-                        elif new_dir.exists:
-                            directory = new_dir
-                        else:
-                            gc.report(1)
-                    elif d == '~':
-                        directory = user.get_home_dir()
-                    else:
-                        new_dir.name = d
-                        new_dir.parent_id = directory.id
-                        if not new_dir.name.isalnum():
-                            gc.error('Directories can only contain letters and numbers.')
-                        else:
-                            new_dir.lookup()
-                            if new_dir.exists:
-                                directory = new_dir
-                            else:
-                                gc.error('That directory doesn\'t exist.')
+                directory = directory.navigate(cmds[1])
             else:
                 # show command usage
-                gc.msg('Enter cd [dir] to change to a folder named [dir].')
-                gc.msg('You can also use cd .. to go up one level,')
-                gc.msg('or cd ~ to go to the root directory.')
+                gc.msg('Enter cd [path] to change to the directory at the specified path.')
+                gc.msg('Use .. for \'up one level\' or ~ for \'top directory\'.')
+                gc.msg('e.g. \'cd ../os\' goes up one level and then to the \'os\' directory.')
 
         elif base_cmd == 'edit':
             if len(cmds) > 1:
-                objects = cmds[1].split('/')    # entered filepath
-                dirs = objects[:-1]             # list of directories to navigate through
-                f_name = objects[-1]            # name of the file to edit
+                objects = cmds[1].split('/')            # entered filepath
+                dirs = string.join(objects[:-1], '/')   # list of directories to navigate through
+                f_name = objects[-1]                    # name of the file to edit
+                f_dir = directory.navigate(dirs)
 
-                current_dir = directory
-
-                # navigate to the target file's parent directory
-                for d in dirs:
-                    if d == '..':
-                        # move up one level
-                        current_dir = Directory(id = current_dir.parent_id)
-                    else:
-                        # move to a subdirectory
-                        current_dir = Directory(d, current_dir.id)
-                    current_dir.lookup()
-
-                # edit the file
-                if current_dir.read_only:
+                if f_dir.read_only:
                     gc.error('The file you specified is in a read-only directory and cannot be edited.')
-                elif current_dir.exists:
-                    f = File(f_name, current_dir)
+                elif f_dir.exists:
+                    f = File(f_name, f_dir)
                     f.lookup()
                     if f.exists:
                         TextEditor(f)
@@ -310,17 +277,13 @@ def prompt(user):
         elif base_cmd in ['mv', 'move']:
             if len(cmds) > 2:
                 fname = cmds[1]
-                dir_name = cmds[2]
+                dir_path = cmds[2]
                 file = File(fname, directory)
                 file.lookup()
                 if file.exists:
                     new_dir = None
-                    if dir_name == '..':
-                        new_dir = Directory(id = directory.parent_id)
-                    else:
-                        new_dir = Directory(dir_name, directory.id)
-                    new_dir.lookup()
-                    if new_dir.exists:
+                    new_dir = directory.navigate(dir_path)
+                    if new_dir.id != directory.id:
                         file.parent = new_dir
                         file.save()
                         gc.success('File moved successfully.')

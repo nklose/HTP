@@ -225,3 +225,44 @@ class Directory:
         mb.add_property('Modified On', self.modified_time)
         mb.add_property('Read Only', str(self.read_only))
         mb.display()
+
+    # returns a relative directory based on a string containing slashes, if it exists
+    def navigate(self, nav_string):
+        new_dir = Directory(id = self.id)
+        new_dir.lookup()
+        error = False
+        for d in nav_string.split('/'):
+            # up one level
+            if d == '..':
+                if new_dir.parent_id == 0:
+                    error = True
+                    gc.error('You are already in the highest-level directory.')
+                else:
+                    new_dir.id = new_dir.parent_id
+                    new_dir.lookup()
+                    if not new_dir.exists:
+                        error = True
+            # to home directory of this computer
+            elif d == '~':
+                while new_dir.parent_id != 0:
+                    new_dir.id = new_dir.parent_id
+                    new_dir.lookup()
+            # to specified directory name
+            else:
+                if not d.isalnum():
+                    error = True
+                    gc.error('Directories can only contain letters and numbers.')
+                else:
+                    new_dir.name = d
+                    new_dir.parent_id = new_dir.id # current directory becomes the parent
+                    new_dir.id = -1
+                    new_dir.exists = False
+                    new_dir.lookup()
+                    if not new_dir.exists:
+                        error = True
+
+        if error:
+            gc.error('The directory you entered doesn\'t exist.')
+            new_dir = self # reset changes
+        
+        return new_dir
