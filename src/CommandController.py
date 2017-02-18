@@ -252,21 +252,30 @@ def prompt(user):
         # moves an object to a new directory
         elif base_cmd in ['mv', 'move']:
             if len(cmds) > 2:
-                fname = cmds[1]
+                obj_name = cmds[1]
                 dir_path = cmds[2]
-                file = File(fname, directory)
+                file = File(obj_name, directory)
                 file.lookup()
+                new_dir = directory.navigate(dir_path)
                 if file.exists:
-                    new_dir = None
-                    new_dir = directory.navigate(dir_path)
                     if new_dir.id != directory.id:
                         file.parent = new_dir
                         file.save()
                         gc.success('File moved successfully.')
                     else:
-                        gc.error('That directory doesn\'t exist here.')
+                        gc.error('The destination directory doesn\'t exist.')
                 else:
-                    gc.error('That file doesn\'t exist here.')
+                    d = Directory(obj_name, directory.id)
+                    d.lookup()
+                    if d.exists:
+                        if new_dir.id != directory.id:
+                            d.parent_id = new_dir.id
+                            d.save()
+                            gc.success('Directory moved successfully.')
+                        else:
+                            gc.error('The destination directory doesn\'t exist.')
+                    else:
+                        gc.error('The object you entered doesn\'t exist here.')
             else:
                 # show command usage
                 gc.msg('Enter mv [file] [folder] to move a file to a new folder.')
