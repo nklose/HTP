@@ -77,37 +77,10 @@ def prompt(user):
 
         # display help info
         if base_cmd == 'help':
-            mb = MessageBox()
-            mb.set_title('Command List')
-            mb.set_label_width(25)
-            mb.add_heading('Basic Commands')
-            mb.add_property('chat', 'opens the global chat room')
-            mb.add_property('disk', 'shows information about disk usage')
-            mb.add_property('log', 'prints out the system log')
-            mb.add_property('summary', 'shows the login summary again')
-            mb.add_heading('Files and Directories')
-            mb.add_property('ls (dir)', 'lists objects in the current directory')
-            mb.add_property('cd <dir>', 'jumps to the directory <dir>')
-            mb.add_property('edit <file>', 'starts text editor for <file>')
-            mb.add_property('view (cat) <file>', 'outputs the contents of <file>')
-            mb.add_property('md (mkdir) <name>', 'creates a new directory called <name>')
-            mb.add_property('mf (mkfile) <name>', 'creates a new test file called <name>')
-            mb.add_property('rm (del) <obj>', 'permanently deletes <obj> and its contents')
-            mb.add_property('cp (copy) <obj> <dest>', 'creates a copy of <obj> named <dest>')
-            mb.add_property('rn (rename) <obj> <name>', 'sets <obj>\'s name to <name>')
-            mb.add_property('mv (move) <obj> <dir>', 'moves <obj> to directory <dir>')
-            mb.add_property('info <obj>', 'shows detailed info about <obj>')
-            mb.add_property('processes (ps)', 'shows running processes with ID numbers')
-            mb.add_property('close (stop) <id>', 'finishes a running process')
-            mb.add_heading('Networking')
-            mb.add_property('ping <target>', 'sends an echo request to the IP or domain <target>')
-            mb.add_property('ssh <target>', 'attempts to log into IP or domain <target>')
-            mb.add_property('ul (upload) <path>', 'uploads the object at local path <path>')
-            mb.add_property('dl (download) <obj>', 'downloads the object <obj> to ~/downloads')
-            mb.add_property('chip', 'changes your ip (can only be done once per day)')
-            mb.display()
+            gc.show_help()
+
+        # switch to chat mode
         elif base_cmd == 'chat':
-            # switches to chat mode
             print('Connecting to chat server...')
             cs = ChatSession(user.handle)
 
