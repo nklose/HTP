@@ -128,32 +128,35 @@ def prompt(user):
         # create a new file
         elif base_cmd in ['mf', 'mkfile']:
             if len(cmds) > 1:
-                f_name = cmds[1] + '.txt'
-                computer.check_space()
-                # check if name is valid
-                if not cmds[1].isalnum():
-                    gc.error('File names can only contain letters and numbers.')
-                    gc.warning('Note that .txt will be automatically appended to your filename.')
-                # check if name is too long
-                elif len(f_name) > gc.FILE_MAX_LENGTH:
-                    gc.error('File names can contain at most ' + str(gc.FILE_MAX_LENGTH) + 'characters.')
-                # check if parent is read-only
-                elif directory.read_only:
-                        gc.error('The current directory is marked as read-only.')
+                base_name = cmds[1]
+
+                if base_name[-4:] == '.txt': # strip file name if necessary
+                    base_name = base_name[:-4]
+
+                if base_name[-4] == '.': # reject other file extensions
+                    gc.error('You can only create new files ending in .txt.')
                 else:
-                    # check if name is already taken
-                    file = File(f_name, directory)
-                    file.lookup()
-                    if file.exists:
-                        gc.error('That file already exists here.')
-                    # check if disk has enough room
-                    elif computer.disk_free < file.size:
-                        gc.error('There isn\'t enough room on the disk for this file.')
+                    f_name = base_name + '.txt' # add file extension
+                    computer.check_space()      # update available space on computer
+
+                    if not base_name.isalnum(): # check if name is alphanumeric
+                        gc.error('File names can only contain letters and numbers.')
+                    elif len(f_name) > gc.FILE_MAX_LENGTH: # check if name is too long for filesystem
+                        gc.error('File names can contain at most ' + str(gc.FILE_MAX_LENGTH) + 'characters.')
+                    elif directory.read_only: # check if parent is read-only
+                            gc.error('The current directory is marked as read-only.')
                     else:
-                        file.save()
-                        gc.success('File ' + f_name + ' created successfully.')
-                        log_entry = user.handle + ' created file ' + f_name
-                        computer.add_log_entry(log_entry)
+                        file = File(f_name, directory)
+                        file.lookup()
+                        if file.exists: # check if name is already taken
+                            gc.error('That file already exists here.')
+                        elif computer.disk_free < file.size: # check if disk is full
+                            gc.error('There isn\'t enough room on the disk for this file.')
+                        else:
+                            file.save()
+                            gc.success('File ' + f_name + ' created successfully.')
+                            log_entry = user.handle + ' created file ' + f_name
+                            computer.add_log_entry(log_entry)
             else:
                 # show command usage
                 gc.msg('Enter mf [file] to create a new text file named [file].txt')
