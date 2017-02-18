@@ -212,6 +212,9 @@ class User:
             # name must be between 4 and 16 characters
             elif len(self.name) < 4 or len(self.name) > 16:
                 gc.error('Your username must be between 4 and 16 characters.')
+            # first character must be a letter
+            elif self.name[0].isdigit():
+                gc.error('Your username must start with a letter.')
             # name must not already exist in database
             else:
                 sql = 'SELECT * FROM users WHERE username = %s;'
@@ -274,6 +277,8 @@ class User:
                 gc.error('You must enter a handle.')
             elif not self.handle.isalnum():
                 gc.error('Your handle can only contain letters and numbers.')
+            elif self.handle[0].isdigit():
+                gc.error('Your handle must start with a letter.')
             elif len(self.handle) < 2 or len(self.handle) > 16:
                 gc.error('Your handle must be between 2 and 16 characters.')
             else:
