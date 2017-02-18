@@ -15,8 +15,9 @@
 import os
 import sys
 import time
-import hashlib
+import string
 import random
+import hashlib
 
 from getpass import getpass
 from datetime import datetime, timedelta
@@ -266,3 +267,13 @@ def show_help():
     mb.add_property('dl (download) <obj>', 'downloads the object <obj> to ~/downloads')
     mb.add_property('chip', 'changes your ip (can only be done once per day)')
     mb.display()
+
+# checks if a given filename matches naming requirements
+def valid_filename(filename):
+    allowed_chars = string.ascii_lowercase + string.digits + '.-_'
+    return all(c in allowed_chars for c in filename)
+
+# checks if a given directory name matches naming requirements
+def valid_dirname(dirname):
+    allowed_chars = string.ascii_lowercase + string.digits + '-_'
+    return all(c in allowed_chars for c in dirname)

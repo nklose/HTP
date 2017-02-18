@@ -273,7 +273,46 @@ def prompt(user):
 
         # renames an object
         elif base_cmd in ['rn', 'rename']:
-            pass
+            if len(cmds) > 2:
+                obj_name = cmds[1]
+                new_name = cmds[2]
+
+                # check if object is a file
+                file = File(obj_name, directory)
+                file.lookup()
+                if file.exists:
+                    newfile = File(new_name, directory)
+                    newfile.lookup()
+                    if newfile.exists: # check if a file already exists with the new name
+                        gc.error('A file already exists here with the new name you specified.')
+                    elif not gc.valid_filename(new_name): # check if name is valid
+                        gc.error('File names can only contain letters, numbers, dots, dashes, and underscores.')
+                    elif new_name[-4:] != obj_name[-4:]: # check if extensions match
+                        gc.error('The new file extension must match the old one.')
+                    else:
+                        file.name = new_name
+                        file.save()
+                        gc.success('File renamed successfully.')
+                # check if object is a directory
+                else:
+                    d = Directory(obj_name, directory.id)
+                    d.lookup()
+                    if d.exists:
+                        newdir = Directory(new_name, directory.id)
+                        newdir.lookup()
+                        if newdir.exists: # check if a directory already exists with the new name
+                            gc.error('A directory already exists here with the new name you specified.')
+                        elif not gc.valid_dirname(new_name): # check if name is valid
+                            gc.error('Directory names can only contain letters, numbers, dashes, and underscores.')
+                        else:
+                            d.name = new_name
+                            d.save()
+                            gc.success('Directory renamed successfully.')
+                    else:
+                        gc.error('The object you entered doesn\'t exist here.')
+            else:
+                # show command usage
+                gc.msg('Enter rn [object] [newname] to rename a file or folder.')
 
         # copies an object
         elif base_cmd in ['cp', 'copy']:

@@ -136,7 +136,7 @@ class Directory:
         else:
             sql = 'UPDATE directories SET dir_name = %s, parent_id = %s, computer_id = %s, '
             sql += 'modified_time = %s, read_only = %s WHERE id = %s'
-            args = [self.name, self.parent_id, self.comp_id, self.id, self.modified_time, self.read_only]
+            args = [self.name, self.parent_id, self.comp_id, self.modified_time, self.read_only, self.id]
             db.post_query(sql, args)
 
         db.close()
@@ -264,5 +264,5 @@ class Directory:
         if error:
             gc.error('The directory you entered doesn\'t exist.')
             new_dir = self # reset changes
-        
+
         return new_dir
