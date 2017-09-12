@@ -102,11 +102,22 @@ class File:
     def get_content(self):
         return self.content
 
-    def rename(self, new_name):
-        pass
-
-    def copy(self, dest_id):
-        pass
+    # copies a source file's properties to this file
+    def copy(self, source):
+        self.parent = source.parent
+        self.owner_id = source.id
+        self.content = source.content
+        self.type = source.type
+        self.level = source.level
+        self.size = source.size
+        self.creation_time = source.creation_time
+        self.modified_time = source.modified_time
+        self.category = source.category
+        self.comment = source.comment
+        self.memory = source.memory
+        self.is_live = source.is_live
+        self.save()
+        self.exists = True
 
     # permanently delete this file
     def delete(self):

@@ -321,11 +321,27 @@ def prompt(user):
                         gc.error('The object you entered doesn\'t exist here.')
             else:
                 # show command usage
-                gc.msg('Enter rn [object] [newname] to rename a file or folder.')
+                gc.msg('Enter rn [object] [newname] to rename a file or directory.')
 
         # copies an object
         elif base_cmd in ['cp', 'copy']:
-            pass
+            if len(cmds) > 2:
+                obj_name = cmds[1]
+                new_name = cmds[2]
+
+                # check if object is a file
+                file = File(obj_name, directory)
+                file.lookup()
+                if file.exists:
+                    newfile = File(new_name, directory)
+                    newfile.lookup()
+                    if newfile.exists:
+                        gc.error('A file already exists here with the name you specified.')
+                    else:
+                        newfile.copy(file)
+            else:
+                # show command usage
+                gc.msg('Enter cp [object] [newname] to copy a file or directory.')
 
         # show disk info
         elif base_cmd == 'disk':
